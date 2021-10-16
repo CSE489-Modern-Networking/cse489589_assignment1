@@ -36,7 +36,7 @@
 #define TRUE 1
 #define CMD_SIZE 100
 #define BUFFER_SIZE 256
-
+#define PORT 3490
 /**
  * main function
  *
@@ -44,12 +44,9 @@
  * @param  argv The argument list
  * @return 0 EXIT_SUCCESS
  */
-int main(int argc, char **argv)
+void start_server()
 {
-  if(argc != 2) {
-    printf("Usage:%s [port]\n", argv[0]);
-    exit(-1);
-  }
+
 
   int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len;
   struct sockaddr_in client_addr;
@@ -63,8 +60,8 @@ int main(int argc, char **argv)
   hints.ai_flags = AI_PASSIVE;
 
   /* Fill up address structures */
-  if (getaddrinfo(NULL, argv[1], &hints, &res) != 0)
-    perror("getaddrinfo failed");
+  /* if (getaddrinfo(NULL, argv[1], &hints, &res) != 0)
+     perror("getaddrinfo failed"); */
 
   /* Socket */
   server_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -123,7 +120,7 @@ int main(int argc, char **argv)
 	    printf("\nI got: %s\n", cmd);
 
 	    //Process PA1 commands here ...
-
+            // ALRIGHT COMMANDS
 	    free(cmd);
 	  }
 	  /* Check if new client is requesting connection */
@@ -169,5 +166,5 @@ int main(int argc, char **argv)
     }
   }
 
-  return 0;
+  return; 
 }

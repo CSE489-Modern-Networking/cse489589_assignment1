@@ -52,12 +52,13 @@ int main(int argc, char **argv)
 	}
 	/* this is if the server is running */ 
 	if(strcmp(argv[1], "s") == 0){ // this checks if there is s
-	  
+	  int port = atoi(argv[2]);
+	  printf("The port number is: %d \n", port); 
 	}
 
-	/* this is if we want the client to run */
+ 	/* this is if we want the client to run */
 	if(strcmp(argv[1], "c") == 0){
-	  
+	  return 0;
 	}
 
 	
