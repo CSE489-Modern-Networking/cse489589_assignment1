@@ -259,7 +259,32 @@ void client_start(char *host_ip){
   printf(host_ip);
   printf("\n");
   int server; 
-  printf(ip_addr_server); 
+  printf(ip_addr_server);
+  server = connect_to_host(ip_addr_server, port_addr_server); 
+  while(TRUE); 
+  {
+    printf("\n[PA1-Client@CSE489/589]$ "); 
+    fflush(stdout); 
+    
+    char *msg = (char *) malloc(sizeof(char) *MSG_SIZE); 
+    memset(msg, '\0', MSG_SIZE); 
+    if(fgets(msg, MSG_SIZE -1, stdin) == NULL){ //mind the newline character that will be written to msg 
+      exit(-1); 
+    }
+    printf(" I got: %s(size:%d chars)", msg, strlen(msg)); 
+    printf("\nSENDing it to the remote server ... "); 
+    if(send(server, msg, strlen(msg), 0) == strlen(msg)){
+      prinf("DONE!\n"); 
+    }
+    fflush(stdout); 
+    /* Initialize buffer to recieve response */ 
+    char *buffer = (char*) malloc(sizeof(char)*BUFFER_SIZE); 
+    memset(buffer, '\0', BUFFER_SIZE); 
+    if(recv(server, buffer, BUFFER_SIZE, 0) >= 0){
+      printf("Server responded: %s", buffer);
+      fflush(stdout); 
+    }
+  }
   return; 
   
 }
