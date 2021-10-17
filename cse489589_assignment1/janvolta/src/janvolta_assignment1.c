@@ -92,9 +92,9 @@ int main(int argc, char **argv)
 	  hostname = gethostname(host, sizeof(host)); 
           // https://ubmnc.wordpress.com/2010/09/22/on-getting-the-ip-name-of-a-machine-for-chatty/ and https://www.tutorialspoint.com/c-program-to-display-hostname-and-ip-address
 	  host_entry = gethostbyname(host);  
-	  IP = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])); 
+	  //IP = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])); 
 	  printf("Current host name: %s\n", host); 
-	  printf("Host IP: %s\n", IP); 
+	  //printf("Host IP: %s\n", IP); 
 	  printf("\n");
 
 	  client_start(IP);  
@@ -206,7 +206,7 @@ void server_start(int port){
 	      printf("\n client sent me: %s\n", buffer); 
 	      printf("ECHOing it back to the remote host..."); 
 	      if(send(fdaccept, buffer, strlen(buffer),0) == strlen(buffer)){
-		printf("DONE!\n"); 
+		      printf("DONE!\n"); 
 
 	      }
 	      fflush(stdout);
