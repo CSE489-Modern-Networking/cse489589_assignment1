@@ -44,7 +44,7 @@
  * @param  argv The argument list
  * @return 0 EXIT_SUCCESS
  */
-void start_server()
+void start_server(int port)
 {
 
 
