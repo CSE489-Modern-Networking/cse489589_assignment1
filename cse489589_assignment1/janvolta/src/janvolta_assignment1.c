@@ -84,16 +84,7 @@ int main(int argc, char **argv)
 
  	/* this is if we want the client to run */
 	if(strcmp(argv[1], "c") == 0){
-	  char host[256];
-	
-	  hostname = gethostname(host, sizeof(host)); 
-          // https://ubmnc.wordpress.com/2010/09/22/on-getting-the-ip-name-of-a-machine-for-chatty/ and https://www.tutorialspoint.com/c-program-to-display-hostname-and-ip-address
-	  host_entry = gethostbyname(host);  
-	  //IP = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])); 
-	  printf("Current host name: %s\n", host); 
-	  //printf("Host IP: %s\n", IP); 
-	  printf("\n");
-
+	  
 	  client_start();  
 	}
 
