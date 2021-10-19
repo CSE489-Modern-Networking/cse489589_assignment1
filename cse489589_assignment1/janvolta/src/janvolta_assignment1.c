@@ -171,7 +171,9 @@ void server_start(int port){
             printf("\nI got: %s\n", cmd);
             
             //Process PA1 commands here ...
-            
+            if(strcmp(cmd, "AUTHOR") == 0){
+              printf("I, janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n");  
+            }
             free(cmd);
           }
           /* Check if new client is requesting connection */
