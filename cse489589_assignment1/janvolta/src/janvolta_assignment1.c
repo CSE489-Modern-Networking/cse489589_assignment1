@@ -52,6 +52,7 @@
 void server_start(int port);
 int connect_to_host(char *server_ip, char* server_port);
 void client_start();  
+
 /**
 
  * main function
@@ -172,7 +173,12 @@ void server_start(int port){
             
             //Process PA1 commands here ...
             if(strcmp(cmd, "AUTHOR") == 0){
-              printf("I, janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n");  
+              char *author = (char*) malloc(sizeof(char)*100);
+              strcpy(author, "I, janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
+              if(send(fdaccept, author, strlen(author), 0) == strlen(buffer))
+                printf("SUCCESS!!\n");
+              fflush(stdout);
+              free(author); 
             }
             free(cmd);
           }
