@@ -180,7 +180,13 @@ void server_start(int port){
               fflush(stdout);
               free(author); 
             }
-            free(cmd);
+			else if(strcmp(cmd,"LIST") == 0 ) {
+				char *buffer = (char*) malloc(sizeof(char)*BUFFER_SIZE);
+    			memset(buffer, '\0', BUFFER_SIZE);
+				if(send(fdaccept, "LINST", strlen(msg), 0) == strlen(msg))
+      				printf("Done!\n");
+            	free(cmd);
+			}
           }
           /* Check if new client is requesting connection */
           else if(sock_index == server_socket){
@@ -290,4 +296,8 @@ void client_start(char *host_ip){
       fflush(stdout);
     }
   }
+}
+void get_List(){
+
+
 }
