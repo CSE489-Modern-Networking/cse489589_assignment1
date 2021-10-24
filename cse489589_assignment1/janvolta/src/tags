@@ -1,0 +1,37 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/jimmy/csnetwork/computer_networking/cse489589_assignment1/janvolta/src/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/p5.9.20210905.0/
+BACKLOG	janvolta_assignment1.c	/^#define BACKLOG /;"	d	file:
+BACKLOG	server.c	/^#define BACKLOG /;"	d	file:
+BUFFER_SIZE	janvolta_assignment1.c	/^#define BUFFER_SIZE /;"	d	file:
+BUFFER_SIZE	server.c	/^#define BUFFER_SIZE /;"	d	file:
+CMD_SIZE	janvolta_assignment1.c	/^#define CMD_SIZE /;"	d	file:
+CMD_SIZE	server.c	/^#define CMD_SIZE /;"	d	file:
+LOGFILE	logger.c	/^char LOGFILE[FILEPATH_LEN];$/;"	v	typeref:typename:char[]
+MSG_SIZE	janvolta_assignment1.c	/^#define MSG_SIZE /;"	d	file:
+PORT	janvolta_assignment1.c	/^#define PORT /;"	d	file:
+PORT	server.c	/^#define PORT /;"	d	file:
+STDIN	janvolta_assignment1.c	/^#define STDIN /;"	d	file:
+STDIN	server.c	/^#define STDIN /;"	d	file:
+TRUE	janvolta_assignment1.c	/^#define TRUE /;"	d	file:
+TRUE	server.c	/^#define TRUE /;"	d	file:
+client_start	janvolta_assignment1.c	/^void client_start(char *host_ip){$/;"	f	typeref:typename:void
+connect_to_host	janvolta_assignment1.c	/^int connect_to_host(char *server_ip, char *server_port) $/;"	f	typeref:typename:int
+cse4589_init_log	logger.c	/^void cse4589_init_log(char* port)$/;"	f	typeref:typename:void
+cse4589_print_and_log	logger.c	/^void cse4589_print_and_log(const char* format, ...)$/;"	f	typeref:typename:void
+get_List	janvolta_assignment1.c	/^void get_List(){$/;"	f	typeref:typename:void
+ip_addr_server	janvolta_assignment1.c	/^#define ip_addr_server /;"	d	file:
+main	janvolta_assignment1.c	/^int main(int argc, char **argv)$/;"	f	typeref:typename:int
+port_addr_server	janvolta_assignment1.c	/^#define port_addr_server /;"	d	file:
+ret_log	logger.c	/^int ret_print, ret_log;$/;"	v	typeref:typename:int
+ret_print	logger.c	/^int ret_print, ret_log;$/;"	v	typeref:typename:int
+server_start	janvolta_assignment1.c	/^void server_start(int port){$/;"	f	typeref:typename:void
+start_server	server.c	/^void start_server(int port)$/;"	f	typeref:typename:void

@@ -20,6 +20,8 @@
  *
  * This contains the main function. Add further description here....
  */
+#include <netinet/in.h>
+#include <arpa/inet.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,6 +37,7 @@
 #include "../include/global.h"
 #include "../include/logger.h"
 
+#include <stdbool.h>
 #define TRUE 1 
 #define MSG_SIZE 256
 #define BUFFER_SIZE 256
@@ -61,7 +64,113 @@ void client_start();
  * @param  argv The argut list
  * @return 0 EXIT_SUCCESS
  */
-int main(int argc, char **argv)
+struct message {
+	char ip[32];
+	char command[20];
+	char data[256];
+	struct ls_element *ls;
+}; 
+
+
+struct ls_element {
+	char ls_hn[40];
+	int ls_post;	
+	int ls_id;	
+	int rcv_msg;	
+	int fd_socket;
+	int snd_msg;	
+	char start[20];
+	struct ls_element *next;
+};
+
+
+struct  ls_element *ls_init(struct ls_element *next)	{
+	struct ls_element *ls= malloc(sizeof(struct ls_element));
+	ls->ls_id = 0;
+	ls->next = next;
+	return ls;
+}
+struct ls_element *ls_set_all(
+	char ls_hn[40],
+    int ls_post,	
+    int ls_id,	
+    int rcv_msg,	
+    int fd_socket,
+    int snd_msg,	
+	char start[20],
+    struct ls_element *next,
+	struct ls_element *temp
+	) {
+	
+	strcpy(temp->ls_hn, ls_hn);         	
+	temp->ls_post	 =  ls_post;	
+	temp->ls_id	     =    ls_id;	
+	temp->rcv_msg	 =  rcv_msg;	
+	temp->fd_socket  =     fd_socket;
+	temp->snd_msg	 =  snd_msg;	
+	strcpy(temp->start,start);
+	temp->     next  =      next;
+	return temp;
+}
+void swap(struct ls_element *first, struct ls_element *second){
+	struct ls_element temp;
+	ls_set_all(	
+	 first->ls_hn
+	,first->ls_post	
+	,first->ls_id	
+	,first->rcv_msg	
+	,first->fd_socket
+	,first->snd_msg	
+	,first->start
+	,first->next		
+	,&temp
+	);
+
+	ls_set_all(	
+	 second->ls_hn
+	,second->ls_post	
+	,second->ls_id	
+	,second->rcv_msg	
+	,second->fd_socket
+	,second->snd_msg	
+	,second->start
+	,second->next		
+	,first
+	);
+	ls_set_all(	
+	 temp.ls_hn
+	,temp.ls_post	
+	,temp.ls_id	
+	,temp.rcv_msg	
+	,temp.fd_socket
+	,temp.snd_msg	
+	,temp.start
+	,temp.next		
+	,first
+	);
+}
+struct ls_element *ls_sort(struct ls_element *ls){
+	struct ls_element *temp;
+	struct ls_element *temp2;
+	bool swaped = false;
+	do
+	{
+		swaped = false;
+		temp = ls;
+		while ( temp->next != temp2 )  {
+			if (temp->ls_post > temp->next->ls_post ) {
+				swap(temp,temp->next);		
+			}
+		}
+		temp2 = temp->next;
+	}
+
+	} 
+	while (temp != NULL) ;
+}
+
+
+	int main(int argc, char **argv)
 {
 	/*Init. Logger*/
 	cse4589_init_log(argv[2]);
@@ -175,16 +284,22 @@ void server_start(int port){
             if(strcmp(cmd, "AUTHOR") == 0){
               char *author = (char*) malloc(sizeof(char)*100);
               strcpy(author, "I, janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
-              if(send(fdaccept, author, strlen(author), 0) == strlen(buffer))
-                printf("SUCCESS!!\n");
+             // if(send(fdaccept, author, strlen(author), 0) == strlen(buffer))
+             //   printf("SUCCESS!!\n");
               fflush(stdout);
               free(author); 
             }
-			else if(strcmp(cmd,"LIST") == 0 ) {
-				char *buffer = (char*) malloc(sizeof(char)*BUFFER_SIZE);
-    			memset(buffer, '\0', BUFFER_SIZE);
-				if(send(fdaccept, "LINST", strlen(msg), 0) == strlen(msg))
-      				printf("Done!\n");
+			if(strcmp(cmd, "IP\n") == 0){
+              char *IPbuffer;
+              char hostbuffer[256];
+              int hostname;
+              hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+              struct hostent host_entry;
+           //   host_entry = gethostbyname(hostbuffer);
+			//IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
+              printf("%s", IPbuffer);
+            }			else if(strcmp(cmd,"LIST") == 0 ) {
+		//		cse4589_print_and_log("%i\n",fdsocket);
             	free(cmd);
 			}
           }
@@ -270,27 +385,62 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
  
   int server; 
+  struct message  client_mess;
   server = connect_to_host("128.205.36.46", "4545"); 
   while(TRUE){
     printf("\n[PA1-Client@CSE489/589]$ ");
     fflush(stdout);
-    
+   fd_set master_list, watch_list; 
     char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
     memset(msg, '\0', MSG_SIZE);
+
+		
+	
+
+
     if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
       exit(-1);
     
     printf("I got: %s(size:%d chars)", msg, strlen(msg));
-    
+	if (strcmp(msg,"AUTHOR")==0) {
+					
+	}
+	else if (strcmp(msg,"IP")==0)  {
+			
+	}
+	else if (strcmp(msg,"PORT")==0)  {
+			
+	}
+	else if (strcmp(msg,"LIST")==0)  {
+		strcpy(client_mess.data, msg);
+		if (send(server, &client_mess, sizeof(client_mess),0)) {
+			cse4589_print_and_log("[LIST:SUCCESS]\n");
+		}
+	}
+	else if (strncmp(msg,"LOGIN",5)==0)  {
+			
+	}
+//	FD_ZERO(&master_list);//Initializes the file descriptor set fdset to have zero bits for all file descriptors. 
+//	FD_ZERO(&watch_list);
+//	
+//	FD_SET(STDIN, &master_list);
+//
+//	FD_SET(server, &master_list);
     printf("\nSENDing it to the remote server ... ");
+	
+
+	
     if(send(server, msg, strlen(msg), 0) == strlen(msg))
       printf("Done!\n");
     fflush(stdout);
     
     /* Initialize buffer to receieve response */
+
     char *buffer = (char*) malloc(sizeof(char)*BUFFER_SIZE);
+//selret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
+		
     memset(buffer, '\0', BUFFER_SIZE);
-    
+
     if(recv(server, buffer, BUFFER_SIZE, 0) >= 0){
       printf("Server responded: %s", buffer);
       fflush(stdout);
