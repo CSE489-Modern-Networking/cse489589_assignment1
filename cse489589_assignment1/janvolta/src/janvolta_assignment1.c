@@ -149,7 +149,7 @@ void swap(struct ls_element *first, struct ls_element *second){
 	,first
 	);
 }
-struct ls_element *ls_sort(struct ls_element *ls){
+void  ls_sort(struct ls_element *ls){
 	struct ls_element *temp;
 	struct ls_element *temp2;
 	bool swaped = false;
@@ -164,9 +164,8 @@ struct ls_element *ls_sort(struct ls_element *ls){
 		}
 		temp2 = temp->next;
 	}
-
-	} 
 	while (temp != NULL) ;
+	
 }
 
 
@@ -338,7 +337,6 @@ void server_start(int port){
                 printf("Done!\n");
               fflush(stdout);
             }
-            
             free(buffer);
           }
         }
@@ -413,9 +411,14 @@ void client_start(char *host_ip){
 	}
 	else if (strcmp(msg,"LIST")==0)  {
 		strcpy(client_mess.data, msg);
-		if (send(server, &client_mess, sizeof(client_mess),0)) {
+		if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 			cse4589_print_and_log("[LIST:SUCCESS]\n");
 		}
+		else
+		{
+			cse4589_print_and_log("[LIST:ERROR]\n");
+		}
+		fflush(stdout);
 	}
 	else if (strncmp(msg,"LOGIN",5)==0)  {
 			
