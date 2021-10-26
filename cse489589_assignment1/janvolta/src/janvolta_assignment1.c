@@ -461,7 +461,9 @@ int connect_to_host(char *server_ip, char *server_port)
 }
 
 void client_start(char *host_ip){
- 
+  int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
+  int fdsocket;
+
   int server; 
   struct client_message  client_mess;
   server = connect_to_host("128.205.36.46", "4545"); 
@@ -482,85 +484,89 @@ void client_start(char *host_ip){
 	FD_SET(STDIN,&master_list);
 	FD_SET(STDIN,&watch_list);
 
-	client;
+	head_socket = server;
 
     char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
     memset(msg, '\0', MSG_SIZE);
 
 	
-	if(selret > 0)
-
-    if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
-      exit(-1);
-	char arg[100][100];
-    int i=0, j = 0;
-	
-
-    for (int n = 0; msg[n] != '\0'; n++){
-    	if (msg[n] == ' ' || msg[n] == '\n' ){
-    		i++;
-    		j = 0;
-    	}else{
-    		arg[i][j] = msg[n];
-    		j++;
-		}
-    }
-    if (arg[0] == NULL) {
+	if(selret > 0)  {
+		printf("ERROR selret\n");
 		exit(-1);
 	}
-
-	free(msg);
-    msg = arg[0]; 
-    printf("I got: %s(size:%d chars)", msg, strlen(msg));
-	if (strcmp(msg,"AUTHOR")==0) {
-					
-	}
-	else if (strcmp(msg,"IP")==0)  {
-			
-	}
-	else if (strcmp(msg,"PORT")==0)  {
-			
-	}
-	else if (strcmp(msg,"LIST")==0)  {
-		strcpy(client_mess.data, "LIST");
-		if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
-			cse4589_print_and_log("\n[LIST:SUCCESS]\n");
-		}
-		else
-		{
-			cse4589_print_and_log("[LIST:ERROR]\n");
-		}
-		printf("yopoooo\n");
-		fflush(stdout);
-	}
-	else if (strncmp(msg,"LOGIN",5)==0)  {
-			
-	}else{
-    	if(send(server, msg, strlen(msg), 0) == strlen(msg))
-    	  printf("Done!\n");
-
-    	fflush(stdout);
-	}
-    
-    /* Initialize buffer to receieve response */
-
-    struct message rec_server_mes;
-//selret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
+	for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
+    	if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
+    	  exit(-1);
+		char arg[100][100];
+    	int i=0, j = 0;
 		
-    memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
 
-    if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
-	  if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
-			print_list(rec_server_mes.ls);
-		
-	  }else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
-		cse4589_print_and_log("[LIST:END]\n");
-	  }
-	  else{
-		  printf("Server responded: %s", rec_server_mes.data);
-	  }
-      fflush(stdout);
-    }
+    	for (int n = 0; msg[n] != '\0'; n++){
+    		if (msg[n] == ' ' || msg[n] == '\n' ){
+    			i++;
+    			j = 0;
+    		}else{
+    			arg[i][j] = msg[n];
+    			j++;
+			}
+    	}
+    	if (arg[0] == NULL) {
+			exit(-1);
+		}
+
+		free(msg);
+    	msg = arg[0]; 
+    	printf("I got: %s(size:%d chars)", msg, strlen(msg));
+		if (strcmp(msg,"AUTHOR")==0) {
+						
+		}
+		else if (strcmp(msg,"IP")==0)  {
+				
+		}
+		else if (strcmp(msg,"PORT")==0)  {
+				
+		}
+		else if (strcmp(msg,"LIST")==0)  {
+			strcpy(client_mess.data, "LIST");
+			if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+				cse4589_print_and_log("\n[LIST:SUCCESS]\n");
+			}
+			else
+			{
+				cse4589_print_and_log("[LIST:ERROR]\n");
+			}
+			printf("yopoooo\n");
+			fflush(stdout);
+		}
+		else if (strncmp(msg,"LOGIN",5)==0)  {
+				
+		}else{
+    		if(send(server, msg, strlen(msg), 0) == strlen(msg))
+    		  printf("Done!\n");
+
+    		fflush(stdout);
+		}
+    	
+    	/* Initialize buffer to receieve response */
+
+    	struct message rec_server_mes;
+//se	lret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
+			
+    	memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
+
+    	if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
+		  if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
+				print_list(rec_server_mes.ls);
+			
+		  }else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
+			cse4589_print_and_log("[LIST:END]\n");
+		  }
+		  else{
+			  printf("Server responded: %s", rec_server_mes.data);
+		  }
+    	  fflush(stdout);
+    	}
+	}
   }
 }
 void get_List(){
