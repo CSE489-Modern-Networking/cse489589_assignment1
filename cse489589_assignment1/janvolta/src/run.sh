@@ -1,1 +1,1 @@
-cd .. && rsync -r ../* s:project  && make 
+cd .. && make   

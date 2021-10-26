@@ -23,15 +23,40 @@ STDIN	janvolta_assignment1.c	/^#define STDIN /;"	d	file:
 STDIN	server.c	/^#define STDIN /;"	d	file:
 TRUE	janvolta_assignment1.c	/^#define TRUE /;"	d	file:
 TRUE	server.c	/^#define TRUE /;"	d	file:
+client_message	janvolta_assignment1.c	/^struct client_message {$/;"	s	file:
 client_start	janvolta_assignment1.c	/^void client_start(char *host_ip){$/;"	f	typeref:typename:void
+command	janvolta_assignment1.c	/^	char command[20];$/;"	m	struct:client_message	typeref:typename:char[20]	file:
+command	janvolta_assignment1.c	/^	char command[20];$/;"	m	struct:message	typeref:typename:char[20]	file:
 connect_to_host	janvolta_assignment1.c	/^int connect_to_host(char *server_ip, char *server_port) $/;"	f	typeref:typename:int
+copy	janvolta_assignment1.c	/^void copy(struct ls_element *first, struct ls_element *second){$/;"	f	typeref:typename:void
 cse4589_init_log	logger.c	/^void cse4589_init_log(char* port)$/;"	f	typeref:typename:void
 cse4589_print_and_log	logger.c	/^void cse4589_print_and_log(const char* format, ...)$/;"	f	typeref:typename:void
+data	janvolta_assignment1.c	/^	char data[256];$/;"	m	struct:client_message	typeref:typename:char[256]	file:
+data	janvolta_assignment1.c	/^	char data[256];$/;"	m	struct:message	typeref:typename:char[256]	file:
+fd_socket	janvolta_assignment1.c	/^	int fd_socket;$/;"	m	struct:ls_element	typeref:typename:int	file:
 get_List	janvolta_assignment1.c	/^void get_List(){$/;"	f	typeref:typename:void
+ip	janvolta_assignment1.c	/^	char ip[32];$/;"	m	struct:client_message	typeref:typename:char[32]	file:
+ip	janvolta_assignment1.c	/^	char ip[32];$/;"	m	struct:ls_element	typeref:typename:char[32]	file:
+ip	janvolta_assignment1.c	/^	char ip[32];$/;"	m	struct:message	typeref:typename:char[32]	file:
 ip_addr_server	janvolta_assignment1.c	/^#define ip_addr_server /;"	d	file:
-main	janvolta_assignment1.c	/^int main(int argc, char **argv)$/;"	f	typeref:typename:int
+ls	janvolta_assignment1.c	/^	struct ls_element ls;$/;"	m	struct:message	typeref:struct:ls_element	file:
+ls_element	janvolta_assignment1.c	/^struct ls_element {$/;"	s	file:
+ls_hn	janvolta_assignment1.c	/^	char ls_hn[40];$/;"	m	struct:ls_element	typeref:typename:char[40]	file:
+ls_id	janvolta_assignment1.c	/^	int ls_id;	$/;"	m	struct:ls_element	typeref:typename:int	file:
+ls_init	janvolta_assignment1.c	/^struct  ls_element *ls_init(struct ls_element *next)	{$/;"	f	typeref:struct:ls_element *
+ls_port	janvolta_assignment1.c	/^	int ls_port;	$/;"	m	struct:ls_element	typeref:typename:int	file:
+ls_set_all	janvolta_assignment1.c	/^void ls_set_all($/;"	f	typeref:typename:void
+ls_sort	janvolta_assignment1.c	/^void  ls_sort(struct ls_element *ls){$/;"	f	typeref:typename:void
+main	janvolta_assignment1.c	/^	int main(int argc, char **argv)$/;"	f	typeref:typename:int
+message	janvolta_assignment1.c	/^struct message {$/;"	s	file:
+next	janvolta_assignment1.c	/^	struct ls_element *next;$/;"	m	struct:ls_element	typeref:struct:ls_element *	file:
 port_addr_server	janvolta_assignment1.c	/^#define port_addr_server /;"	d	file:
+print_list	janvolta_assignment1.c	/^void print_list(struct ls_element ls){$/;"	f	typeref:typename:void
+rcv_msg	janvolta_assignment1.c	/^	int rcv_msg;	$/;"	m	struct:ls_element	typeref:typename:int	file:
 ret_log	logger.c	/^int ret_print, ret_log;$/;"	v	typeref:typename:int
 ret_print	logger.c	/^int ret_print, ret_log;$/;"	v	typeref:typename:int
 server_start	janvolta_assignment1.c	/^void server_start(int port){$/;"	f	typeref:typename:void
+snd_msg	janvolta_assignment1.c	/^	int snd_msg;	$/;"	m	struct:ls_element	typeref:typename:int	file:
 start_server	server.c	/^void start_server(int port)$/;"	f	typeref:typename:void
+status	janvolta_assignment1.c	/^	char status[20];$/;"	m	struct:ls_element	typeref:typename:char[20]	file:
+swap	janvolta_assignment1.c	/^void swap(struct ls_element *first, struct ls_element *second){$/;"	f	typeref:typename:void

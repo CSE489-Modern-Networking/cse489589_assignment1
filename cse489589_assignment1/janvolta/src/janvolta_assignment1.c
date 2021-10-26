@@ -64,25 +64,32 @@ void client_start();
  * @param  argv The argut list
  * @return 0 EXIT_SUCCESS
  */
-struct message {
+
+
+struct client_message {
 	char ip[32];
 	char command[20];
 	char data[256];
-	struct ls_element *ls;
-}; 
+};
 
 
 struct ls_element {
 	char ls_hn[40];
-	int ls_post;	
+	int ls_port;	
 	int ls_id;	
 	int rcv_msg;	
 	int fd_socket;
 	int snd_msg;	
-	char start[20];
+	char status[20];
+	char ip[32];
 	struct ls_element *next;
 };
-
+struct message {
+	char ip[32];
+	char command[20];
+	char data[256];
+	struct ls_element ls;
+}; 
 
 struct  ls_element *ls_init(struct ls_element *next)	{
 	struct ls_element *ls= malloc(sizeof(struct ls_element));
@@ -90,64 +97,57 @@ struct  ls_element *ls_init(struct ls_element *next)	{
 	ls->next = next;
 	return ls;
 }
-struct ls_element *ls_set_all(
+void ls_set_all(
 	char ls_hn[40],
     int ls_post,	
     int ls_id,	
     int rcv_msg,	
     int fd_socket,
     int snd_msg,	
-	char start[20],
+	char status[20],
+	char ip[32],
     struct ls_element *next,
 	struct ls_element *temp
 	) {
 	
 	strcpy(temp->ls_hn, ls_hn);         	
-	temp->ls_post	 =  ls_post;	
+	temp->ls_port	 =  ls_post;	
 	temp->ls_id	     =    ls_id;	
 	temp->rcv_msg	 =  rcv_msg;	
 	temp->fd_socket  =     fd_socket;
 	temp->snd_msg	 =  snd_msg;	
-	strcpy(temp->start,start);
+	strcpy(temp->status,status);
 	temp->     next  =      next;
-	return temp;
+	strcpy(temp->ip,ip);
 }
-void swap(struct ls_element *first, struct ls_element *second){
-	struct ls_element temp;
+
+void copy(struct ls_element *first, struct ls_element *second){
 	ls_set_all(	
 	 first->ls_hn
-	,first->ls_post	
+	,first->ls_port	
 	,first->ls_id	
 	,first->rcv_msg	
 	,first->fd_socket
 	,first->snd_msg	
-	,first->start
-	,first->next		
-	,&temp
-	);
-
-	ls_set_all(	
-	 second->ls_hn
-	,second->ls_post	
-	,second->ls_id	
-	,second->rcv_msg	
-	,second->fd_socket
-	,second->snd_msg	
-	,second->start
+	,first->status
+	,first->ip
 	,second->next		
-	,first
+	,second
 	);
-	ls_set_all(	
-	 temp.ls_hn
-	,temp.ls_post	
-	,temp.ls_id	
-	,temp.rcv_msg	
-	,temp.fd_socket
-	,temp.snd_msg	
-	,temp.start
-	,temp.next		
-	,first
-	);
+}
+void swap(struct ls_element *first, struct ls_element *second){
+	struct ls_element temp;
+	copy (first,&temp);			
+	copy (second,first);
+	copy (&temp,second);
+}
+void print_list(struct ls_element ls){
+	cse4589_print_and_log("%-5d%-35s%-20s%-8d\n",
+				ls.ls_id,
+				ls.ls_hn,
+				ls.ip,
+				ls.ls_port
+		);
 }
 void  ls_sort(struct ls_element *ls){
 	struct ls_element *temp;
@@ -158,7 +158,7 @@ void  ls_sort(struct ls_element *ls){
 		swaped = false;
 		temp = ls;
 		while ( temp->next != temp2 )  {
-			if (temp->ls_post > temp->next->ls_post ) {
+			if (temp->ls_port > temp->next->ls_port ) {
 				swap(temp,temp->next);		
 			}
 		}
@@ -209,11 +209,16 @@ void server_start(int port){
   printf("testing \n");
   char port_char[4];
   sprintf(port_char,"%d",port);
+
+  struct client_message recieve_mes;
+  struct message server_mes;
+
   int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
   struct sockaddr_in client_addr; 
   struct addrinfo hints, *res; 
   fd_set master_list, watch_list; 
-  
+  struct ls_element *server_ls = NULL;
+  struct ls_element send_ls; 
   memset(&hints, 0, sizeof(hints)); 
   hints.ai_family = AF_INET; 
   hints.ai_socktype = SOCK_STREAM; 
@@ -266,18 +271,41 @@ void server_start(int port){
     if(selret > 0){
       /* Loop through socket descriptors to check which ones are ready */
       for(sock_index=0; sock_index<=head_socket; sock_index+=1){
-        
+		fflush(stdout);
+        memset(&server_mes, '\0', sizeof(server_mes));
         if(FD_ISSET(sock_index, &watch_list)){
           
           /* Check if new command on STDIN */
           if (sock_index == STDIN){
+			
+
+			 
             char *cmd = (char*) malloc(sizeof(char)*CMD_SIZE);
-            
-            memset(cmd, '\0', CMD_SIZE);
             if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to cmd
               exit(-1);
+
+			char arg[100][100];
+       	 	int i=0, j = 0;
+	   	 	char *buffer = cmd;
+            memset(cmd, '\0', CMD_SIZE);
+
+       	 	for (int n = 0; buffer[n] != '\0'; n++){
+       	 		if (buffer[n] == ' ' || buffer[n] == '\n' ){
+       	 			i++;
+       	 			j = 0;
+       	 		}else{
+       	 			arg[i][j] = buffer[n];
+       	 			j++;
+	   	 		}
+       	 	}
+       	 	if (arg[0] == NULL) {
+				exit(-1);
+			}
+
+			free(cmd);
+          	cmd = arg[0]; 
             
-            printf("\nI got: %s\n", cmd);
+            printf("\nI got123: %s\n", cmd);
             
             //Process PA1 commands here ...
             if(strcmp(cmd, "AUTHOR") == 0){
@@ -299,7 +327,7 @@ void server_start(int port){
               printf("%s", IPbuffer);
             }			else if(strcmp(cmd,"LIST") == 0 ) {
 		//		cse4589_print_and_log("%i\n",fdsocket);
-            	free(cmd);
+            	//free(cmd);
 			}
           }
           /* Check if new client is requesting connection */
@@ -310,18 +338,49 @@ void server_start(int port){
               perror("Accept failed.");
             
             printf("\nRemote Host connected!\n");                        
-            
+		//	char ls_hn[40],
+		//    int ls_port,	
+		//    int ls_id,	
+		//    int rcv_msg,	
+		//    int fd_socket,
+		//    int snd_msg,	
+		//	char status,
+		//    struct ls_element *next,
+		//	struct ls_element *temp
+			char ip[32];
+	        inet_ntop(AF_INET,&client_addr.sin_addr.s_addr,ip, INET_ADDRSTRLEN);
+			char host[40];
+		
+	        getnameinfo((struct sockaddr *)&client_addr, caddr_len,host, sizeof(host), 0,0,0);
+			struct ls_element *top = malloc(sizeof(struct ls_element));
+			char status[ 20] = "LOGGED_IN";
+			int id = (server_ls != NULL)? server_ls->ls_id+1 : 0;
+           	ls_set_all(
+				host	
+				,client_addr.sin_port
+				,id
+				,0
+				,fdaccept
+				,0
+				,status
+				,ip
+				,server_ls
+				,top	
+			); 
+		   
+			server_ls = top;
+
             /* Add to watched socket list */
             FD_SET(fdaccept, &master_list);
             if(fdaccept > head_socket) head_socket = fdaccept;
+			fflush(stdout);
           }
           /* Read from existing clients */
           else{
             /* Initialize buffer to receieve response */
-            char *buffer = (char*) malloc(sizeof(char)*BUFFER_SIZE);
-            memset(buffer, '\0', BUFFER_SIZE);
-            
-            if(recv(sock_index, buffer, BUFFER_SIZE, 0) <= 0){
+           	memset(&recieve_mes, '\0', sizeof(recieve_mes)); 
+            if(recv(sock_index, &recieve_mes, sizeof(recieve_mes), 0) <= 0){
+				
               close(sock_index);
               printf("Remote Host terminated connection!\n");
               
@@ -330,14 +389,34 @@ void server_start(int port){
             }
             else {
               //Process incoming data from existing clients here ...
-              
-              printf("\nClient sent me: %s\n", buffer);
-              printf("ECHOing it back to the remote host ... ");
-              if(send(fdaccept, buffer, strlen(buffer), 0) == strlen(buffer))
-                printf("Done!\n");
-              fflush(stdout);
+			printf("RES:%s,%d",recieve_mes.command, strlen(recieve_mes.command) ) ;
+			  if(strcmp(recieve_mes.command,"LIST") ==0 ){
+				  int i = 0;
+			//	print_list(&server_ls);
+				for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
+					if (i== 5) break;
+					i++;
+					printf("pointer%p\n",cur);
+					print_list(*cur);
+					copy(cur,&send_ls);		
+					strcpy(server_mes.data,"LIST");
+				 	server_mes.ls=	send_ls;
+					print_list(server_mes.ls);
+					if(send(sock_index,&server_mes,sizeof(server_mes),0) == sizeof(server_mes) ){
+						printf("list_sent\n");
+					}
+
+				}	
+				strcpy(server_mes.data,"LIST");
+			
+				if(send(fdaccept, &server_mes, sizeof(server_mes), 0) == sizeof(server_mes))
+	                            {
+	                     
+									printf("Done!\n");
+	                            }
+				fflush(stdout);
+			  }
             }
-            free(buffer);
           }
         }
       }
@@ -372,8 +451,7 @@ int connect_to_host(char *server_ip, char *server_port)
 
   /* Connect */ 
   if(connect(fdsocket, res->ai_addr, res-> ai_addrlen) < 0){
-    perror("Connect Failed"); 
-  }
+    perror("Connect Failed"); }
 
   freeaddrinfo(res); 
   return fdsocket; 
@@ -383,7 +461,7 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
  
   int server; 
-  struct message  client_mess;
+  struct client_message  client_mess;
   server = connect_to_host("128.205.36.46", "4545"); 
   while(TRUE){
     printf("\n[PA1-Client@CSE489/589]$ ");
@@ -398,7 +476,25 @@ void client_start(char *host_ip){
 
     if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
       exit(-1);
-    
+	char arg[100][100];
+    int i=0, j = 0;
+	
+
+    for (int n = 0; msg[n] != '\0'; n++){
+    	if (msg[n] == ' ' || msg[n] == '\n' ){
+    		i++;
+    		j = 0;
+    	}else{
+    		arg[i][j] = msg[n];
+    		j++;
+		}
+    }
+    if (arg[0] == NULL) {
+		exit(-1);
+	}
+
+	free(msg);
+    msg = arg[0]; 
     printf("I got: %s(size:%d chars)", msg, strlen(msg));
 	if (strcmp(msg,"AUTHOR")==0) {
 					
@@ -410,9 +506,9 @@ void client_start(char *host_ip){
 			
 	}
 	else if (strcmp(msg,"LIST")==0)  {
-		strcpy(client_mess.data, msg);
+		strcpy(client_mess.data, "LIST");
 		if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
-			cse4589_print_and_log("[LIST:SUCCESS]\n");
+			cse4589_print_and_log("\n[LIST:SUCCESS]\n");
 		}
 		else
 		{
@@ -429,7 +525,6 @@ void client_start(char *host_ip){
 //	FD_SET(STDIN, &master_list);
 //
 //	FD_SET(server, &master_list);
-    printf("\nSENDing it to the remote server ... ");
 	
 
 	
@@ -439,13 +534,21 @@ void client_start(char *host_ip){
     
     /* Initialize buffer to receieve response */
 
-    char *buffer = (char*) malloc(sizeof(char)*BUFFER_SIZE);
+    struct message rec_server_mes;
 //selret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
 		
-    memset(buffer, '\0', BUFFER_SIZE);
+    memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
 
-    if(recv(server, buffer, BUFFER_SIZE, 0) >= 0){
-      printf("Server responded: %s", buffer);
+    if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
+	  if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
+			print_list(rec_server_mes.ls);
+		
+	  }else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
+		cse4589_print_and_log("[LIST:END]\n");
+	  }
+	  else{
+		  printf("Server responded: %s", rec_server_mes.data);
+	  }
       fflush(stdout);
     }
   }
