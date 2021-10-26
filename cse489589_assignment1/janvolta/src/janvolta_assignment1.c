@@ -389,7 +389,9 @@ void server_start(int port){
             }
             else {
               //Process incoming data from existing clients here ...
-			printf("RES:%s,%d",recieve_mes.command, strlen(recieve_mes.command) ) ;
+
+			  printf("RES:%x",sizeof(recieve_mes) ) ;
+				printf("RES:%s,%d",recieve_mes.command, strlen(recieve_mes.command) ) ;
 			  if(strcmp(recieve_mes.command,"LIST") ==0 ){
 				  int i = 0;
 			//	print_list(&server_ls);
@@ -463,16 +465,30 @@ void client_start(char *host_ip){
   int server; 
   struct client_message  client_mess;
   server = connect_to_host("128.205.36.46", "4545"); 
+
+   fd_set master_list, watch_list; 
+  FD_ZERO(&master_list);
+  FD_ZERO(&watch_list);
+                             
+  FD_SET(STDIN,&master_list);
+	
   while(TRUE){
     printf("\n[PA1-Client@CSE489/589]$ ");
     fflush(stdout);
-   fd_set master_list, watch_list; 
+
+	FD_ZERO(&master_list);	
+	FD_ZERO(&watch_list);
+
+	FD_SET(STDIN,&master_list);
+	FD_SET(STDIN,&watch_list);
+
+	client;
+
     char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
     memset(msg, '\0', MSG_SIZE);
 
-		
 	
-
+	if(selret > 0)
 
     if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
       exit(-1);
@@ -514,23 +530,17 @@ void client_start(char *host_ip){
 		{
 			cse4589_print_and_log("[LIST:ERROR]\n");
 		}
+		printf("yopoooo\n");
 		fflush(stdout);
 	}
 	else if (strncmp(msg,"LOGIN",5)==0)  {
 			
-	}
-//	FD_ZERO(&master_list);//Initializes the file descriptor set fdset to have zero bits for all file descriptors. 
-//	FD_ZERO(&watch_list);
-//	
-//	FD_SET(STDIN, &master_list);
-//
-//	FD_SET(server, &master_list);
-	
+	}else{
+    	if(send(server, msg, strlen(msg), 0) == strlen(msg))
+    	  printf("Done!\n");
 
-	
-    if(send(server, msg, strlen(msg), 0) == strlen(msg))
-      printf("Done!\n");
-    fflush(stdout);
+    	fflush(stdout);
+	}
     
     /* Initialize buffer to receieve response */
 
