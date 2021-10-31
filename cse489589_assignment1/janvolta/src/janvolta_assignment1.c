@@ -149,6 +149,13 @@ void print_list(struct ls_element ls){
 				ls.ls_port
 		);
 }
+void print_full_list(struct ls_element *ls) {
+	struct ls_element *cur = ls; 
+	while (cur != NULL) {
+		print_list(*cur);
+		cur = cur->next;
+	}
+}
 void  ls_sort(struct ls_element *ls){
 	struct ls_element *temp;
 	struct ls_element *temp2;
@@ -167,7 +174,17 @@ void  ls_sort(struct ls_element *ls){
 	while (temp != NULL) ;
 	
 }
-
+int split(char delim,char *input,char *output){
+	int i;
+	for ( i = 0; i != '\0' && i != delim ; i++){
+		output[i] = input[i];
+	}
+	return i;	
+}
+bool ip_valid(char *ip){
+	struct sockaddr_in sock;
+	return inet_pton(AF_INET, ip,&sock.sin_addr) ? true: false;
+}
 
 	int main(int argc, char **argv)
 {
@@ -201,6 +218,13 @@ void  ls_sort(struct ls_element *ls){
 	return 0;
 }
 
+bool is_port(char *value){
+	for (int i = 0;i != '\0'; i++) {
+		if (value[i] <= 9 && value[i] >= 0) return false;
+	}
+		
+	return true;
+}
 /**********************************************************************************************************/
 
 // starting server function
@@ -256,10 +280,10 @@ void server_start(int port){
   
   head_socket = server_socket;
   
+  
   while(TRUE){
     memcpy(&watch_list, &master_list, sizeof(master_list));
     
-    printf("\n[PA1-Server@CSE489/589]$ ");
     fflush(stdout);
     
     /* select() system call. This will BLOCK */
@@ -280,6 +304,7 @@ void server_start(int port){
 			
 
 			 
+    		printf("\n[PA1-Server@CSE489/589]$ ");
             char *cmd = (char*) malloc(sizeof(char)*CMD_SIZE);
             if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to cmd
               exit(-1);
@@ -391,9 +416,11 @@ void server_start(int port){
             else {
               //Process incoming data from existing clients here ...
 
+
 			  if(strcmp(recieve_mes.command,"LIST") ==0 ){
 				  int i = 0;
 			//	print_list(&server_ls);
+		//		print_full_list(server_ls);
 				for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
 					if (i== 5) break;
 					i++;
@@ -413,7 +440,30 @@ void server_start(int port){
 	            }
 				fflush(stdout);
 			  }
+			  else if (strcmp(recieve_mes.command,"SEND") == 0){
+				  char send_ip[32];
+				  char recv_ip[32];
+				  for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+					if (cur->fd_socket == sock_index){
+						strcpy(send_ip,cur->ip);	
+						cur->snd_msg++;
+						break;
+					}
+				  }
+				for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+					if (strcmp(cur->ip,recieve_mes.ip) == 0){
+						strcpy(send_ip,cur->ip);	
+						cur->snd_msg++;
+						break;
+					}
+				}
+
+			  }
+			  else {
+				
+			  }
             }
+			fflush(stdout);
           }
         }
       }
@@ -468,9 +518,9 @@ void client_start(char *host_ip){
   	FD_ZERO(&watch_list);
   	                           
   	FD_SET(STDIN,&master_list);
-  	  
+  	 head_socket = 0 ; 
+//	printf("\n[PA1-Client@CSE489/589]$ ");
   	while(TRUE){
-		printf("\n[PA1-Client@CSE489/589]$ ");
     	fflush(stdout);
 		
 
@@ -488,7 +538,7 @@ void client_start(char *host_ip){
     	memset(msg, '\0', MSG_SIZE);
 			
 		selret = select(head_socket + 1, &watch_list, NULL, NULL, NULL);
-		
+		int ip_char_counter;	
 		if(selret < 0)  {
 			printf("ERROR selret\n");
 			exit(-1);
@@ -496,6 +546,7 @@ void client_start(char *host_ip){
 		for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
 			if(!FD_ISSET(sock_index,&watch_list)) continue;
 			if (sock_index == STDIN) {
+//				printf("\n[PA1-Client@CSE489/589]$ ");
     			if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
     			  exit(-1);
 				char arg[100][100];
@@ -517,7 +568,7 @@ void client_start(char *host_ip){
 
 				free(msg);
     			msg = arg[0]; 
-    			printf("I got: %s(size:%d chars)", msg, strlen(msg));
+    		//	printf("I got: %s(size:%d chars)", msg, strlen(msg));
 				if (strcmp(msg,"AUTHOR")==0) {
 								
 				}
@@ -540,11 +591,23 @@ void client_start(char *host_ip){
 				}
 				else if (strncmp(msg,"LOGIN",5)==0)  {
 						
-				}else{
-    				if(send(server, msg, strlen(msg), 0) == strlen(msg))
-    				  printf("Done!\n");
+				}else if (strncmp(msg,"SEND", 4) == 0) {
+					char *ip = arg[1];
+					
+					if (ip_valid(ip))  {
+						strcmp(client_mess.data,arg[2]);
+						strcmp(client_mess.ip,ip);
+						strcmp(client_mess.command,"SEND");
 
-    				fflush(stdout);
+						if (send(server,&client_mess,sizeof(client_mess),0) == 0){
+
+						}		
+					}
+					else {
+						cse4589_print_and_log("[SEND:ERROR]\n");
+						cse4589_print_and_log("[SEND:END]\n");
+					}
+							
 				}
     			
     			/* Initialize buffer to receieve response */
