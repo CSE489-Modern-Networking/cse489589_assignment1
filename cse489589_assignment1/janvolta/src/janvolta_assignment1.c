@@ -416,7 +416,7 @@ void server_start(int port){
             else {
               //Process incoming data from existing clients here ...
 
-
+//hello
 			  if(strcmp(recieve_mes.command,"LIST") ==0 ){
 				  int i = 0;
 			//	print_list(&server_ls);
