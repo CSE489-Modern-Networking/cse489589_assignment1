@@ -553,7 +553,6 @@ int connect_to_host(char *server_ip, char *server_port)
 {
 	int fdsocket; 
 	struct addrinfo hints, *res; 
-	strcpy(client_mess.status, "logged-in");
   /* Set up hints structure */ 
 	memset(&hints, 0, sizeof(hints)); 
 	hints.ai_family = AF_INET; 
@@ -561,20 +560,20 @@ int connect_to_host(char *server_ip, char *server_port)
 
   /* Fill up address structures */ 
 	if(getaddrinfo(server_ip, server_port, &hints, &res) != 0){
-		cse4589_print_and_log("[LOGIN:ERROR]\n")
+		cse4589_print_and_log("[LOGIN:ERROR]\n");
 		perror("Failed to create socket"); 
 	}
 
   /* socket */ 
 	fdsocket = socket(res->ai_family, res->ai_socktype, res->ai_protocol); 
 	if(fdsocket < 0){
-		cse4589_print_and_log("[LOGIN:ERROR]\n")
+		cse4589_print_and_log("[LOGIN:ERROR]\n");
 		perror("Failed to create socket!"); 
 	}
 
   /* Connect */ 
 	if(connect(fdsocket, res->ai_addr, res-> ai_addrlen) < 0){
-		cse4589_print_and_log("[LOGIN:ERROR]\n")
+		cse4589_print_and_log("[LOGIN:ERROR]\n");
 		perror("Connect Failed"); 
 	}
 
@@ -605,8 +604,8 @@ void client_start(char *host_ip){
 	FD_SET(STDIN,&master_list);
 	head_socket = 0 ; 
 //	printf("\n[PA1-Client@CSE489/589]$ ");
-	cse4589_print_and_log("[LOGIN:SUCCESS]\n")
-	cse4589_print_and_log("[LOGIN:END]\n")
+	cse4589_print_and_log("[LOGIN:SUCCESS]\n");
+	cse4589_print_and_log("[LOGIN:END]\n");
 	while(TRUE){
 		fflush(stdout);
 
