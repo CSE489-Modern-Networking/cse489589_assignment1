@@ -306,9 +306,9 @@ void server_start(int port){
 			 
     		printf("\n[PA1-Server@CSE489/589]$ ");
             char *cmd = (char*) malloc(sizeof(char)*CMD_SIZE);
-            if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to cmd
+            if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) { //Mind the newline character that will be written to cmd
               exit(-1);
-
+			}
 			char arg[100][100];
        	 	int i=0, j = 0;
 	   	 	char *buffer = cmd;
@@ -361,7 +361,7 @@ void server_start(int port){
             caddr_len = sizeof(client_addr);
             fdaccept = accept(server_socket, (struct sockaddr *)&client_addr, &caddr_len);
             if(fdaccept < 0)
-              perror("Accept failed.");
+        		perror("Accept failed.");
             
             printf("\nRemote Host connected!\n");                        
 		//	char ls_hn[40],
@@ -399,7 +399,7 @@ void server_start(int port){
             /* Add to watched socket list */
             FD_SET(fdaccept, &master_list);
             if(fdaccept > head_socket) head_socket = fdaccept;
-			fflush(stdout);
+		//	fflush(stdout);
           }
           /* Read from existing clients */
           else{
@@ -441,29 +441,56 @@ void server_start(int port){
 				fflush(stdout);
 			  }
 			  else if (strcmp(recieve_mes.command,"SEND") == 0){
-				  char send_ip[32];
+			  	  char send_ip[32];
 				  char recv_ip[32];
+				  int send_socket_id = 0;
 				  for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
-					if (cur->fd_socket == sock_index){
-						strcpy(send_ip,cur->ip);	
-						cur->snd_msg++;
-						break;
+						if (cur->fd_socket == sock_index){
+							strcpy(send_ip,cur->ip);	
+							cur->snd_msg++;
+							break;
+						}
+				   }
+					for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+						if (strcmp(cur->ip,recieve_mes.ip) == 0){
+							strcpy(recv_ip,cur->ip);	
+							cur->rcv_msg++;
+
+							send_socket_id = cur->fd_socket;
+							break;
+						}
 					}
-				  }
-				for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
-					if (strcmp(cur->ip,recieve_mes.ip) == 0){
-						strcpy(send_ip,cur->ip);	
-						cur->snd_msg++;
-						break;
+					bool blocked = true;
+					if (!blocked) {
+						continue;	
+					} 
+					else {
+						strcpy(server_mes.command,"MESSAGE");
+						strcpy(server_mes.ip,send_ip);
+						strcpy(server_mes.data,send_ip);
+						if (send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
+							cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+							cse4589_print_and_log("%s to %s of(%s)",send_ip,recv_ip,server_mes.data);
+							if(send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
+
+							}
+						}
+						else {
+							cse4589_print_and_log("[FAILED:SUCCESS]\n");
+						}
 					}
-				}
+					//DO BLOCK_LIST
+			//	  struct ls_element *top=server_ls; 
+			//		while (top->ls_id != 0) {
+			//			
+			//		} 
 
 			  }
-			  else {
-				
-			  }
+		//	  else {
+		//		
+		//	  }
             }
-			fflush(stdout);
+			//fflush(stdout);
           }
         }
       }
@@ -519,8 +546,9 @@ void client_start(char *host_ip){
   	                           
   	FD_SET(STDIN,&master_list);
   	 head_socket = 0 ; 
-//	printf("\n[PA1-Client@CSE489/589]$ ");
   	while(TRUE){
+
+//	printf("\n[PA1-Client@CSE489/589]$ ");
     	fflush(stdout);
 		
 
@@ -546,8 +574,8 @@ void client_start(char *host_ip){
 		for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
 			if(!FD_ISSET(sock_index,&watch_list)) continue;
 			if (sock_index == STDIN) {
-//				printf("\n[PA1-Client@CSE489/589]$ ");
-    			if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
+//				printf("\n[PA1-Client@CSE489/589]$ "); 
+				if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
     			  exit(-1);
 				char arg[100][100];
     			int i=0, j = 0;
@@ -600,7 +628,7 @@ void client_start(char *host_ip){
 						strcmp(client_mess.command,"SEND");
 
 						if (send(server,&client_mess,sizeof(client_mess),0) == 0){
-
+							printf("%s\n",client_mess.data);
 						}		
 					}
 					else {
@@ -623,8 +651,10 @@ void client_start(char *host_ip){
 					  }else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
 							cse4589_print_and_log("[LIST:END]\n");
 					  }
+					  
 					  else{
 						  printf("Server responded: %s", rec_server_mes.data);
+//						  return; 
 					  }
     				  fflush(stdout);
     				}
