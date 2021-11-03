@@ -394,7 +394,6 @@ void server_start(int port){
           		,0
           		,fdaccept
           		,0
-          		,status
           		,ip
           		,server_ls
           		,top	
@@ -439,7 +438,7 @@ void server_start(int port){
           				}
 
           		}
-          		else if(strcmp(recieve_mes.command,"LIST") ==0 ){
+          		}else if(strcmp(recieve_mes.command,"LIST") ==0 ){
           			int i = 0;
 			//	print_list(&server_ls);
 		//		print_full_list(server_ls);
@@ -482,7 +481,6 @@ void server_start(int port){
 
           		}
           		else {
-
           		}
           	//-------------------------------------------------------------------------------------------------------------------------------------------
           	}
@@ -496,7 +494,7 @@ void server_start(int port){
 }
 
 
-/* CLIENT SIDE!! */ 
+/* CLIENT SIDE!! -------------------------------------------------------------------------------------------------------*/ 
 void login_initial_state(){
 	while(TRUE){
 		char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
@@ -525,26 +523,10 @@ void login_initial_state(){
 			//handle that you 
 			break; 
 		}
-		else if (strcmp(msg,"AUTHOR")==0) {
+    // put the before LOGIN commands here 
 
-		}
-		else if (strcmp(msg,"IP")==0)  {
 
-		}
-
-		else if (strcmp(msg,"PORT")==0)  {
-			strcpy(client_mess.command, "PORT");
-			struct sockaddr_in portnum;
-			if(getsockname(fdsocket,(struct sockaddr *)&portnum, sizeof(portnum)) == -1)
-			{
-				cse4589_print_and_log("[PORT:ERROR]\n");
-			}
-			else{
-				cse4589_print_and_log("[PORT:SUCCESS]\n");
-				cse4589_print_and_log("PORT:%d\n", ntohs(portnum.sin_port));
-			}
-
-		}
+		
 	}
 	return;
 }
@@ -553,6 +535,7 @@ int connect_to_host(char *server_ip, char *server_port)
 {
 	int fdsocket; 
 	struct addrinfo hints, *res; 
+	
   /* Set up hints structure */ 
 	memset(&hints, 0, sizeof(hints)); 
 	hints.ai_family = AF_INET; 
@@ -588,8 +571,7 @@ void client_start(char *host_ip){
 
 	int server; 
 	struct client_message  client_mess;
-	strcpy(client_mess.status, "logged-out");
-
+	
 	// THIS SECTION WE WOULD ONLY CONTINUE IF CLIENT IS LOGGED IN IF NOT HE/SHE CAN ONLY USE AUTHOR/PORT/IP
 	//---------------------------------------------------------------------------------------------------------------------------------------------------------LOGIN COMMAND
 	login_initial_state(); 
