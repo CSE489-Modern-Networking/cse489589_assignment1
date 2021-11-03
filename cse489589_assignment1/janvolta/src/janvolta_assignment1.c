@@ -152,7 +152,7 @@ void print_list(struct ls_element ls){
 }
 void print_statistics(struct ls_element ls){
   // these are place holders 
-	cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", ls.ls_id, ls.ls_hn, ls.snd_msg, ls.rcv_msg, ls.status)
+	cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", ls.ls_id, ls.ls_hn, ls.snd_msg, ls.rcv_msg, ls.status);
 
 }
 void print_full_list(struct ls_element *ls) {
@@ -394,6 +394,7 @@ void server_start(int port){
           		,0
           		,fdaccept
           		,0
+          		,status 
           		,ip
           		,server_ls
           		,top	
