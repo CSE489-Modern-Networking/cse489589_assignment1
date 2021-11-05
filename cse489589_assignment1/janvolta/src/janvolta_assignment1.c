@@ -342,7 +342,7 @@ void server_start(int port){
             //Process PA1 commands here ...
             if(strcmp(cmd, "AUTHOR") == 0){
             	char *author = (char*) malloc(sizeof(char)*100);
-            	strcpy(author, "I, janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
+            	strcpy(author, "I, jhotzma,janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
 
             	fflush(stdout);
             	free(author); 
@@ -602,7 +602,6 @@ int connect_to_host(char *server_ip, char *server_port)
 
 
 void client_start(char *host_ip){
-<<<<<<< HEAD
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
 
@@ -627,9 +626,6 @@ void client_start(char *host_ip){
 	cse4589_print_and_log("[LOGIN:END]\n");
 	while(TRUE){
 		fflush(stdout);
-
-
-  
 
 		FD_ZERO(&master_list);	
 		FD_ZERO(&watch_list);
@@ -660,7 +656,6 @@ void client_start(char *host_ip){
 				char arg[100][100];
     			int i=0, j = 0;
 				
-
     			for (int n = 0; msg[n] != '\0'; n++){
     				if (msg[n] == ' ' || msg[n] == '\n' ){
     					i++;
