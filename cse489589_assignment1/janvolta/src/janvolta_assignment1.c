@@ -473,7 +473,7 @@ void server_start(int port){
 	            }
 				fflush(stdout);
 			  }
-			  else if (strcmp(recieve_mes.command,"SEND") == 0){
+			  if (strcmp(recieve_mes.command,"SEND") == 0){
 				  printf("ACCEPT\n"); 
 				  char recv_ip[32],send_ip[32];
 				  int send_socket_id = 0;
@@ -614,46 +614,42 @@ int connect_to_host(char *server_ip, char *server_port)
 	return fdsocket; 
 }
 
+	
 
 void client_start(char *host_ip){
-	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
-	int fdsocket;
+  	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
+  	int fdsocket;
 
-	int server; 
-	struct client_message  client_mess;
-	
-	// THIS SECTION WE WOULD ONLY CONTINUE IF CLIENT IS LOGGED IN IF NOT HE/SHE CAN ONLY USE AUTHOR/PORT/IP
-	//---------------------------------------------------------------------------------------------------------------------------------------------------------LOGIN COMMAND
-	login_initial_state(); 
-	
-	 //-------------------------------------------------------------------------------------------------------
-	server = connect_to_host("128.205.36.46", "4545"); //need to change this line
+  	int server; 
+  	struct client_message  client_mess;
+  	login_initial_state(); 
+  	server = connect_to_host("128.205.36.46", "4545"); 
 
-	fd_set master_list, watch_list; 
-	FD_ZERO(&master_list);
-	FD_ZERO(&watch_list);
+  	 fd_set master_list, watch_list; 
+  	FD_ZERO(&master_list);
+  	FD_ZERO(&watch_list);
+  	                           
+  	FD_SET(STDIN,&master_list);
+  	 head_socket = 0 ; 
+  	while(TRUE){
 
-	FD_SET(STDIN,&master_list);
-	head_socket = 0 ; 
 //	printf("\n[PA1-Client@CSE489/589]$ ");
-	cse4589_print_and_log("[LOGIN:SUCCESS]\n");
-	cse4589_print_and_log("[LOGIN:END]\n");
-	while(TRUE){
-		fflush(stdout);
+    	fflush(stdout);
+		
 
 		FD_ZERO(&master_list);	
 		FD_ZERO(&watch_list);
 
 		FD_SET(STDIN,&master_list);
-
+		
 		FD_SET(server,&master_list);
 
 		head_socket = server;
 
 		memcpy(&watch_list, &master_list, sizeof(master_list));
-		char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
-		memset(msg, '\0', MSG_SIZE);
-		
+    	char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
+    	memset(msg, '\0', MSG_SIZE);
+			
 		selret = select(head_socket + 1, &watch_list, NULL, NULL, NULL);
 		int ip_char_counter;	
 		if(selret < 0)  {
@@ -663,37 +659,37 @@ void client_start(char *host_ip){
 		for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
 			if(!FD_ISSET(sock_index,&watch_list)) continue;
 			if (sock_index == STDIN) {
-
 //				printf("\n[PA1-Client@CSE489/589]$ "); 
 				if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
-					exit(-1);
+    			  exit(-1);
 				char arg[100][100];
-				int i=0, j = 0;
+    			int i=0, j = 0;
 				
-				for (int n = 0; msg[n] != '\0'; n++){
-					if (msg[n] == ' ' || msg[n] == '\n' ){
-						i++;
-						j = 0;
-					}else{
-						arg[i][j] = msg[n];
-						j++;
+
+    			for (int n = 0; msg[n] != '\0'; n++){
+    				if (msg[n] == ' ' || msg[n] == '\n' ){
+    					i++;
+    					j = 0;
+    				}else{
+    					arg[i][j] = msg[n];
+    					j++;
 					}
-				}
-				if (arg[0] == NULL) {
+    			}
+    			if (arg[0] == NULL) {
 					exit(-1);
 				}
 
 				free(msg);
-				msg = arg[0]; 
+    			msg = arg[0]; 
     		//	printf("I got: %s(size:%d chars)", msg, strlen(msg));
-				if (strcmp(msg,"AUTHOR")==0) { // we shouldnt do any of these 
-
+				if (strcmp(msg,"AUTHOR")==0) {
+								
 				}
 				else if (strcmp(msg,"IP")==0)  {
-
+						
 				}
 				else if (strcmp(msg,"PORT")==0)  {
-
+						
 				}
 				else if (strcmp(msg,"LIST")==0)  {
 					strcpy(client_mess.command, "LIST");
@@ -707,7 +703,7 @@ void client_start(char *host_ip){
 					fflush(stdout);
 				}
 				else if (strncmp(msg,"LOGIN",5)==0)  {
-
+						
 				}else if (strncmp(msg,"SEND", 4) == 0) {
 					char *ip = arg[1];
 					printf("arg[2]%s\n",arg[2]);			
@@ -724,7 +720,6 @@ void client_start(char *host_ip){
 						cse4589_print_and_log("[SEND:ERROR]\n");
 						cse4589_print_and_log("[SEND:END]\n");
 					}
-
 							
 				}else if (strcmp(msg,"BROADCAST")==0) {
 					char *mes = arg[1];
@@ -739,18 +734,11 @@ void client_start(char *host_ip){
 
 					}
 			  	}		
-
     			/* Initialize buffer to receieve response */
-			}else {
-				struct message rec_server_mes;
+				}else {
+    				struct message rec_server_mes;
 //se				lret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
-
-				memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
-				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
-					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
-						print_list(rec_server_mes.ls);
 						
-
     				memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
     				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
 					  if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
@@ -770,11 +758,9 @@ void client_start(char *host_ip){
 						printf("yo\n"); //	close(sock_index);
 					}	
 				}
-			}
 			fflush(stdout);
+			}
 		}
-	}
-
 }
 //-----------------------------------------------------------------------------------------------------------------------------------------------
 void get_List(){
