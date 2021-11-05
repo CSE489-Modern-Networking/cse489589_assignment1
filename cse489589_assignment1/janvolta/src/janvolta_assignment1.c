@@ -150,9 +150,27 @@ void print_list(struct ls_element ls){
 		ls.ls_port
 		);
 }
+
 void print_statistics(struct ls_element ls){
   // these are place holders 
 	cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", ls.ls_id, ls.ls_hn, ls.snd_msg, ls.rcv_msg, ls.status);
+
+
+struct ls_element *remove_id(struct ls_element *cur,int socket_id){
+	if (cur == NULL) exit(-1);
+	
+	if (cur->fd_socket == socket_id) {return cur->next;} 
+	struct ls_element *top = cur;	
+	struct ls_element *prev = NULL;
+	while (cur != NULL ) {
+		if (cur->fd_socket == socket_id) {
+			prev->next = cur->next;
+			break;
+		} 
+		prev = cur;		
+		cur = cur->next;
+	} 
+	return top;
 
 }
 void print_full_list(struct ls_element *ls) {
@@ -231,6 +249,13 @@ bool is_port(char *value){
 
 	return true;
 }
+void set_message(char *command,char *ip,char *msg,struct message *m){
+	strcpy(m->command,command);
+	strcpy(m->ip,ip);
+	strcpy(m->data,msg);
+
+}
+
 /**********************************************************************************************************/
 
 // starting server function
@@ -417,12 +442,14 @@ void server_start(int port){
           /* Read from existing clients */
           else{
             /* Initialize buffer to receieve response */
-	        printf("%s", "recieving messages"); 
-          	memset(&recieve_mes, '\0', sizeof(recieve_mes)); 
-          	if(recv(sock_index, &recieve_mes, sizeof(recieve_mes), 0) <= 0){
 
-          		close(sock_index);
-          		printf("Remote Host terminated connection!\n");
+           	memset(&recieve_mes, '\0', sizeof(recieve_mes)); 
+            if(recv(sock_index, &recieve_mes, sizeof(recieve_mes), 0) <= 0){
+					
+              close(sock_index);
+			  server_ls = remove_id(server_ls,sock_index);
+              printf("Remote Host terminated connection!\n");
+              
 
               /* Remove from watched list */
           		FD_CLR(sock_index, &master_list);
@@ -438,75 +465,74 @@ void server_start(int port){
 		//		print_full_list(server_ls);
 
 
-          			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
-          				if (i== 5) break;
-          				i++;
-          				print_list(*cur);
-          				copy(cur,&send_ls);		
-          				strcpy(server_mes.command,"LIST");
-          				server_mes.ls=	send_ls;
-          				if(send(sock_index,&server_mes,sizeof(server_mes),0) == sizeof(server_mes) ){
-          					printf("list_sent\n");
-          				}
+				}	
+				strcpy(server_mes.command,"LISTEND");
+			
+				if(send(fdaccept, &server_mes, sizeof(server_mes), 0) == sizeof(server_mes)) {
+					printf("Done!\n");
+	            }
+				fflush(stdout);
+			  }
+			  else if (strcmp(recieve_mes.command,"SEND") == 0){
+				  printf("ACCEPT\n"); 
+				  char recv_ip[32],send_ip[32];
+				  int send_socket_id = 0;
+				  for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+						if (cur->fd_socket == sock_index){
+							strcpy(send_ip,cur->ip);	
+							cur->snd_msg++;
+							break;
+						}
+				   }
+					for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+						if (strcmp(cur->ip,recieve_mes.ip) == 0){
+							strcpy(recv_ip,cur->ip);	
+							cur->rcv_msg++;
 
-          			}	
-          			strcpy(server_mes.command,"LISTEND");
+							send_socket_id = cur->fd_socket;
+							break;
+						}
+					}
+					bool blocked = true;
+					if (!blocked) {
+						continue;	
+					} 
+					else {
+						strcpy(server_mes.command,"MESSAGE");
+						strcpy(server_mes.ip,send_ip);
+						strcpy(server_mes.data,recieve_mes.data);
+						if (send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
+							cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+							cse4589_print_and_log("%s to %s of(%s)\n",send_ip,recv_ip,server_mes.data);
+						//	if(send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) 
+						//{
+						//	}
+						}
+						else {
+							cse4589_print_and_log("[RELAYED:FAILED]\n");
+						}
+					} 
 
-          			if(send(fdaccept, &server_mes, sizeof(server_mes), 0) == sizeof(server_mes)) {
-          				printf("Done!\n");
-          			}
-          			fflush(stdout);
-          		}
-          		else if (strcmp(recieve_mes.command,"SEND") == 0){
-          			char send_ip[32];
-          			char recv_ip[32];
-          			int send_socket_id = 0;
-          			for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
-          				if (cur->fd_socket == sock_index){
-          					strcpy(send_ip,cur->ip);	
-          					cur->snd_msg++;
-          					break;
-          				}
-          			}
-          			for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
-          				if (strcmp(cur->ip,recieve_mes.ip) == 0){
-          					strcpy(recv_ip,cur->ip);	
-          					cur->rcv_msg++;
-
-          					send_socket_id = cur->fd_socket;
-          					break;
-          				}
-          			}
-          			bool blocked = true;
-          			if (!blocked) {
-          				continue;	
-          			} 
-          			else {
-          				strcpy(server_mes.command,"MESSAGE");
-          				strcpy(server_mes.ip,send_ip);
-          				strcpy(server_mes.data,send_ip);
-          				if (send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
-          					cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-          					cse4589_print_and_log("%s to %s of(%s)",send_ip,recv_ip,server_mes.data);
-          					if(send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
-
-          					}
-          				}
-          				else {
-          					cse4589_print_and_log("[FAILED:SUCCESS]\n");
-          				}
-          			}
 					//DO BLOCK_LIST
-			//	  struct ls_element *top=server_ls; 
-			//		while (top->ls_id != 0) {
-			//			
-			//		} 
+			  		} 
 
-          		}
-		//	  else {
-		//		
-		//	  }
-          	}
+			  else if (strcmp(recieve_mes.command,"BROADCAST") == 0) {
+				for (struct ls_element *cur = server_ls; cur != NULL;  cur = cur->next  )	{
+					set_message("MSG",cur->ip,recieve_mes.data,&server_mes);	
+					if (send(cur->fd_socket,&server_mes,sizeof(server_mes),0) == sizeof(server_mes)) {
+					//	cse4589_print_and_log("%s to %s of(%s)\n",recieve_mes.ip,cur->ls_id,server_mes.data);
+
+						cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
+						
+					}else {
+						cse4589_print_and_log("[BROADCAST:FAILED]\n");
+					}
+				//	print_list(*cur);
+				}				
+
+			  }
+            }
+
 			//fflush(stdout);
 
           }
@@ -684,13 +710,13 @@ void client_start(char *host_ip){
 
 				}else if (strncmp(msg,"SEND", 4) == 0) {
 					char *ip = arg[1];
-					
+					printf("arg[2]%s\n",arg[2]);			
 					if (ip_valid(ip))  {
-						strcmp(client_mess.data,arg[2]);
-						strcmp(client_mess.ip,ip);
-						strcmp(client_mess.command,"SEND");
+						strcpy(client_mess.data,arg[2]);
+						strcpy(client_mess.ip,ip);
+						strcpy(client_mess.command,"SEND");
 
-						if (send(server,&client_mess,sizeof(client_mess),0) == 0){
+						if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)){
 							printf("%s\n",client_mess.data);
 						}		
 					}
@@ -699,7 +725,20 @@ void client_start(char *host_ip){
 						cse4589_print_and_log("[SEND:END]\n");
 					}
 
-				}
+							
+				}else if (strcmp(msg,"BROADCAST")==0) {
+					char *mes = arg[1];
+					strcpy(client_mess.command,"BROADCAST");
+					strcpy(client_mess.data,msg);
+					if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)) {
+						
+						cse4589_print_and_log("[BROADCAST:SUCCESS]");
+					}
+					else {
+						cse4589_print_and_log("[BROADCAST:FAILED]");
+
+					}
+			  	}		
 
     			/* Initialize buffer to receieve response */
 			}else {
@@ -711,15 +750,25 @@ void client_start(char *host_ip){
 					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
 						print_list(rec_server_mes.ls);
 						
-					}else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
-						cse4589_print_and_log("[LIST:END]\n");
-					}
 
-					else{
-						printf("Server responded: %s", rec_server_mes.data);
-//						  return; 
-					}
-					fflush(stdout);
+    				memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
+    				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
+					  if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
+							print_list(rec_server_mes.ls);
+						
+					  }else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
+							cse4589_print_and_log("[LIST:END]\n");
+					  }
+					  else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
+							cse4589_print_and_log("From(%s):%s\n",rec_server_mes.ip,rec_server_mes.data);
+					  }
+					  else{ printf("Server responded: %s", rec_server_mes.data);
+//					      return; 
+					  }
+    				  fflush(stdout);
+    				}else  {
+						printf("yo\n"); //	close(sock_index);
+					}	
 				}
 			}
 			fflush(stdout);
