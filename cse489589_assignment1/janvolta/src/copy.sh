@@ -1,1 +1,1 @@
-cd .. && rsync -r ../* s:project
+cd .. && rsync -ri ../* s:project
