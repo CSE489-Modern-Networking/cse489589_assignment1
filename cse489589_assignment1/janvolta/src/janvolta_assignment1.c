@@ -334,10 +334,9 @@ void server_start(int port){
             	exit(-1);
             }
 
-            free(cmd);
             cmd = arg[0]; 
             
-            printf("\nI got123: %s\n", cmd);
+            printf("\nI got: %s\n", cmd);
             
             //Process PA1 commands here ...
             if(strcmp(cmd, "AUTHOR") == 0){
@@ -347,7 +346,7 @@ void server_start(int port){
             	fflush(stdout);
             	free(author); 
             }
-            if(strcmp(cmd, "IP") == 0){
+            else if(strcmp(cmd, "IP") == 0){
             	char *IPbuffer;
             	char hostbuffer[256];
             	int hostname;
@@ -357,7 +356,7 @@ void server_start(int port){
 			//IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
             	printf("%s", IPbuffer);
             }	
-            else if(strcmp(cmd,"LIST") == 0 ) {
+            else else if(strcmp(cmd,"LIST") == 0 ) {
 		//		cse4589_print_and_log("%i\n",fdsocket);
             	//free(cmd);
             }
@@ -374,7 +373,11 @@ void server_start(int port){
           				server_mes.ls=	send_ls;
           			}
           			fflush(stdout);
+          			free(cmd);
+
             }
+            free(cmd);
+
           }
           /* Check if new client is requesting connection */
           else if(sock_index == server_socket){
