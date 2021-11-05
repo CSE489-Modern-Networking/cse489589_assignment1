@@ -312,29 +312,14 @@ void server_start(int port){
 
 						printf("\n[PA1-Server@CSE489/589]$ ");
 						char *cmd = (char*) malloc(sizeof(char)*CMD_SIZE);
+						memset(cmd, '\0', CMD_SIZE);
             if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) { //Mind the newline character that will be written to cmd
             	exit(-1);
             }
-            char arg[100][100];
-            int i=0, j = 0;
-            char *buffer = cmd;
-
-            memset(cmd, '\0', CMD_SIZE);
-
-            for (int n = 0; buffer[n] != '\0'; n++){
-            	if (buffer[n] == ' ' || buffer[n] == '\n' ){
-            		i++;
-            		j = 0;
-            	}else{
-            		arg[i][j] = buffer[n];
-            		j++;
-            	}
-            }
-            if (arg[0] == NULL) {
-            	exit(-1);
-            }
-
-            cmd = arg[0]; 
+       
+             
+        
+             
             
             printf("\nI got: %s\n", cmd);
             
@@ -356,14 +341,15 @@ void server_start(int port){
 			//IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
             	printf("%s", IPbuffer);
             }	
-            else else if(strcmp(cmd,"LIST") == 0 ) {
+            else if(strcmp(cmd,"LIST") == 0 ) {
 		//		cse4589_print_and_log("%i\n",fdsocket);
             	//free(cmd);
             }
-            else if(strcmp(cmd, "STATISTICS") == 0){
+            else if(strcmp(cmd, "STATISTICS\n") == 0){
             		int i = 0;  // exit needs 
-            		printf("%s", "STATISTICS CLICKED!")
-          			//ls_sort(&server_ls); 
+            		printf("%s", "STATISTICS CLICKED!");
+          			
+ 
           			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){ // iteratures through all of the lists
           				if (i== 5) break;
           				i++;
@@ -373,10 +359,9 @@ void server_start(int port){
           				server_mes.ls=	send_ls;
           			}
           			fflush(stdout);
-          			free(cmd);
-
-            }
-            free(cmd);
+    			
+           }
+           free(cmd);
 
           }
           /* Check if new client is requesting connection */
@@ -432,6 +417,7 @@ void server_start(int port){
           /* Read from existing clients */
           else{
             /* Initialize buffer to receieve response */
+	        printf("%s", "recieving messages"); 
           	memset(&recieve_mes, '\0', sizeof(recieve_mes)); 
           	if(recv(sock_index, &recieve_mes, sizeof(recieve_mes), 0) <= 0){
 
@@ -443,6 +429,7 @@ void server_start(int port){
           	}
           	else {
               //Process incoming data from existing clients here ...
+		printf("%s", "JESUS");  
 
           		//-------------------------------------------------------------------------------------------------------------------------------------------SERVER COMMANDS
           	if(strcmp(recieve_mes.command,"LIST") ==0 ){
