@@ -154,6 +154,7 @@ void print_list(struct ls_element ls){
 void print_statistics(struct ls_element ls){
   // these are place holders 
 	cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", ls.ls_id, ls.ls_hn, ls.snd_msg, ls.rcv_msg, ls.status);
+
 }
 
 struct ls_element *remove_id(struct ls_element *cur,int socket_id){
