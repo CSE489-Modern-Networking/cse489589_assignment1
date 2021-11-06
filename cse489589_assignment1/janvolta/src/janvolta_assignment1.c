@@ -33,7 +33,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <netdb.h>
-#include<setjmp.h> 
 #include "../include/global.h"
 #include "../include/logger.h"
 
@@ -58,7 +57,7 @@ int connect_to_host(char *server_ip, char* server_port);
 void client_start();  
 void login_initial_state(bool is_initial);
 bool ip_valid(char *ip); 
-jmp_buf loginbuf;
+
 /**
 
  * main function
@@ -508,66 +507,66 @@ void server_start(int port){
           				if (strcmp(cur->ip,recieve_mes.ip) == 0){
           					strcpy(recv_ip,cur->ip);	
           					cur->rcv_msg++;
-          					if(cur->status,
-          						send_socket_id = cur->fd_socket;
-          						break;
-          					}
+          					//if(cur->status,
+          					send_socket_id = cur->fd_socket;
+          					break;
           				}
-          				bool blocked = true;
-          				if (!blocked) {
-          					continue;	
-          				} 
-          				else {
-          					strcpy(server_mes.command,"MESSAGE");
-          					strcpy(server_mes.ip,send_ip);
-          					strcpy(server_mes.data,recieve_mes.data);
-          					if (send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
-          						cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-          						cse4589_print_and_log("%s to %s of(%s)\n",send_ip,recv_ip,server_mes.data);
+          			}
+          			bool blocked = true;
+          			if (!blocked) {
+          				continue;	
+          			} 
+          			else {
+          				strcpy(server_mes.command,"MESSAGE");
+          				strcpy(server_mes.ip,send_ip);
+          				strcpy(server_mes.data,recieve_mes.data);
+          				if (send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
+          					cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+          					cse4589_print_and_log("%s to %s of(%s)\n",send_ip,recv_ip,server_mes.data);
 						//	if(send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) 
 						//{
 						//	}
-          					}
-          					else {
-          						cse4589_print_and_log("[RELAYED:FAILED]\n");
-          					}
-          				} 
-          				fflush(stdout); 
-					//DO BLOCK_LIST
+          				}
+          				else {
+          					cse4589_print_and_log("[RELAYED:FAILED]\n");
+          				}
           			} 
+          			fflush(stdout); 
+					//DO BLOCK_LIST
+          		} 
 
-          			else if (strcmp(recieve_mes.command,"BROADCAST") == 0) {
-          				for (struct ls_element *cur = server_ls; cur != NULL;  cur = cur->next  )	{
-          					set_message("MSG",cur->ip,recieve_mes.data,&server_mes);	
-          					if (send(cur->fd_socket,&server_mes,sizeof(server_mes),0) == sizeof(server_mes)) {
+          		else if (strcmp(recieve_mes.command,"BROADCAST") == 0) {
+          			for (struct ls_element *cur = server_ls; cur != NULL;  cur = cur->next  )	{
+          				set_message("MSG",cur->ip,recieve_mes.data,&server_mes);	
+          				if (send(cur->fd_socket,&server_mes,sizeof(server_mes),0) == sizeof(server_mes)) {
 					//	cse4589_print_and_log("%s to %s of(%s)\n",recieve_mes.ip,cur->ls_id,server_mes.data);
 
-          						cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
+          					cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
 
-          					}else {
-          						cse4589_print_and_log("[BROADCAST:FAILED]\n");
-          					}
+          				}else {
+          					cse4589_print_and_log("[BROADCAST:FAILED]\n");
+          				}
 				//	print_list(*cur);
-          				}				
+          			}				
 
-          			}
           		}
-			//fflush(stdout);
           	}
+			//fflush(stdout);
           }
         }
       }
     }
-
   }
 
-  struct client_message client_mess; 
-  int server; 
+}
+
+struct client_message client_mess; 
+int server; 
 /* CLIENT SIDE!! -------------------------------------------------------------------------------------------------------*/ 
-  void login_initial_state(bool is_initial){
-  	while(TRUE){
-  		char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
-  		printf("\n[PA1-Client@CSE489/589]$ ");
+void login_initial_state(bool is_initial){
+	while(TRUE){
+		char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
+		printf("\n[PA1-Client@CSE489/589]$ ");
 		 //Mind the newline character that will be written to msg
 		if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
 			exit(-1);
@@ -601,6 +600,7 @@ void server_start(int port){
 			else{
 				cse4589_print_and_log("\n[LOGIN:ERROR]\n");
 			} 
+			// ----------------------------------------SEND LIST STUFF BECAUSE ITS REQUIRED 
 			strcpy(client_mess.command, "LIST");
 			if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 				cse4589_print_and_log("\n[LIST:SUCCESS]\n");
@@ -671,7 +671,7 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
-	struct message *ptr_rec_mes;
+  struct message *ptr_rec_mes
 	//int server; 
 	//struct client_message  client_mess;
 	login_initial_state(TRUE); 
@@ -758,7 +758,7 @@ void client_start(char *host_ip){
 				}else if (strcmp(msg,"LIST")==0) {
 					print_list(ptr_rec_mes->ls);
 				}
-				else if (strcmp(msg,"REFRESH")==0) {
+				else if (strcmp(msg,"REFRESH") == 0){
 					strcpy(client_mess.command, "LIST");
 					if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 						cse4589_print_and_log("\n[LIST:SUCCESS]\n");
@@ -768,9 +768,7 @@ void client_start(char *host_ip){
 						cse4589_print_and_log("[LIST:ERROR]\n");
 					}
 					fflush(stdout);
-				}
-
-				else if (strncmp(msg,"SEND", 4) == 0) {
+				}else if (strncmp(msg,"SEND", 4) == 0) {
 					char *ip = arg[1];
 					printf("arg[2]%s\n",arg[2]);			
 					if(TRUE){
@@ -806,12 +804,12 @@ void client_start(char *host_ip){
 			}else {
 				struct message rec_server_mes;
 //se				lret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
-
+				
 				memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
 				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
 					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
 						print_list(rec_server_mes.ls);
-						ptr_rec_mes = &rec_server_mes;
+						ptr_rec_mes = &rec_server_mes; 
 
 					}else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
 						cse4589_print_and_log("[LIST:END]\n");
