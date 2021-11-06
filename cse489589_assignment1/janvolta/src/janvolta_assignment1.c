@@ -1,6 +1,6 @@
 /**
  * @janvolta_assignment1
- * @author  jan voltaire vergara <janvolta@buffalo.edu>
+ * @author  jan voltaire vergara <janvolta@buffalo.edu>, Ze Ming Zhang <zemingzh@buffalo.edu>, Jon Choi <jmchoi@buffalo.edu>, Jimmy Holtzman <jholtzma.edu> 
  * @version 1.0
  *
  * @section LICENSE
@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <netdb.h>
-
+#include<setjmp.h> 
 #include "../include/global.h"
 #include "../include/logger.h"
 
@@ -57,6 +57,7 @@ int connect_to_host(char *server_ip, char* server_port);
 void client_start();  
 void login_initial_state();
 bool ip_valid(char *ip); 
+jmp_buf loginbuf;
 /**
 
  * main function
@@ -313,7 +314,7 @@ void server_start(int port){
 
 	//printf("[PA1-Server@CSE489/589]$ "); 
 	while(TRUE){
-	  printf("[PA1-Server@CSE489/589]$ "); 
+		printf("[PA1-Server@CSE489/589]$ "); 
 		memcpy(&watch_list, &master_list, sizeof(master_list));
 
 		fflush(stdout);
@@ -336,24 +337,19 @@ void server_start(int port){
 
 
 
-					  
+
 						char *cmd = (char*) malloc(sizeof(char)*CMD_SIZE);
-						 
+
             if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) { //Mind the newline character that will be written to cmd
             	exit(-1);
             }
-
-	      
-
-
-
             
             printf("\nI got123: %s\n", cmd);
             
             //Process PA1 commands here ...
             if(strcmp(cmd, "AUTHOR") == 0){
             	char *author = (char*) malloc(sizeof(char)*100);
-            	strcpy(author, "I, janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
+            	strcpy(author, "I, jholtzma,janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
              // if(send(fdaccept, author, strlen(author), 0) == strlen(buffer))
              //   printf("SUCCESS!!\n");
             	fflush(stdout);
@@ -374,21 +370,21 @@ void server_start(int port){
             	//free(cmd);
             }
             else if(strcmp(cmd, "STATISTICS\n") == 0){
-            		int i = 0;
-			 
-          			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
-          				if (i== 5) break;
-          				i++;
-          				print_statistics(*cur);
-          				copy(cur,&send_ls);		
-          				strcpy(server_mes.command,"STATISTICS");
-          				server_mes.ls=	send_ls;
-  
-          			}	
-				
-          			printf("[STATISTICS:SUCCESS]\n"); 
-				
-          			fflush(stdout);
+            	int i = 0;
+
+            	for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
+            		if (i== 5) break;
+            		i++;
+            		print_statistics(*cur);
+            		copy(cur,&send_ls);		
+            		strcpy(server_mes.command,"STATISTICS");
+            		server_mes.ls=	send_ls;
+
+            	}	
+
+            	printf("[STATISTICS:SUCCESS]\n"); 
+
+            	fflush(stdout);
             }
             free(cmd);
           }
@@ -453,7 +449,7 @@ void server_start(int port){
           	else {
               //Process incoming data from existing clients here ...
 
-		  printf("\n");  
+          		printf("\n");  
           		if(strcmp(recieve_mes.command,"LIST") ==0 ){
           			int i = 0;
 			//	print_list(&server_ls);
@@ -477,16 +473,25 @@ void server_start(int port){
           			}
           			fflush(stdout);
           		}
-			else if (strcmp(recieve_mes.command,"LOGOUT") == 0){
+          		else if (strcmp(recieve_mes.command,"LOGOUT") == 0){
 			  //do the forloopy loopy thingy
-			  for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
-			    if(cur->fd_socket == sock_index){
-			      strcpy(cur->status, "LOGOUT");
-			      break;
-			    }
-			  } 
-			  fflush(stdout); 
-			}
+          			for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
+          				if(cur->fd_socket == sock_index){
+          					strcpy(cur->status, "LOGOUT");
+          					break;
+          				}
+          			} 
+          			fflush(stdout); 
+          		}
+          		else if(stcmp(recieve_mes.command, "LOGIN") == 0){
+          			for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
+          				if(cur->fd_socket == sock_index){
+          					strcpy(cur->status, "LOGGEDIN");
+          					break;
+          				}
+          			} 
+          			fflush(stdout); 
+          		}
           		else if (strcmp(recieve_mes.command,"SEND") == 0){
           			printf("ACCEPT\n"); 
           			char recv_ip[32],send_ip[32];
@@ -526,7 +531,7 @@ void server_start(int port){
           					cse4589_print_and_log("[RELAYED:FAILED]\n");
           				}
           			} 
-				fflush(stdout); 
+          			fflush(stdout); 
 					//DO BLOCK_LIST
           		} 
 
@@ -557,7 +562,7 @@ void server_start(int port){
 
 
 /* CLIENT SIDE!! -------------------------------------------------------------------------------------------------------*/ 
-void login_initial_state(){
+void login_initial_state(bool is_initial){
 	while(TRUE){
 		char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
 		printf("\n[PA1-Client@CSE489/589]$ ");
@@ -581,14 +586,15 @@ void login_initial_state(){
 
 		free(msg);
 		msg = arg[0]; 
-		if(strcmp(msg,"LOGIN") == 0){
-			//handle that you 
-		   
-		   
-		   
-		  break; 
 
+		if(strcmp(msg,"LOGIN") == 0 && is_initial){
+			//handle that you 
+			break; 
 		}
+		else if (strcmp(msg,"LOGIN") == 0 && !is_initial){
+			longjmp(loginbuf, 1); 
+		}
+
     // put the before LOGIN commands here 
 
 
@@ -638,7 +644,7 @@ void client_start(char *host_ip){
 
 	int server; 
 	struct client_message  client_mess;
-	login_initial_state(); 
+	login_initial_state(TRUE); 
 	server = connect_to_host("128.205.36.46", "4545"); 
 
 	fd_set master_list, watch_list; 
@@ -676,19 +682,19 @@ void client_start(char *host_ip){
 		for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
 			if(!FD_ISSET(sock_index,&watch_list)) continue;
 			if (sock_index == STDIN) {
-			        char *msg = (char *) malloc(sizeof(char)*MSG_SIZE); 
-			        memset(msg, '\0', MSG_SIZE); 
+				char *msg = (char *) malloc(sizeof(char)*MSG_SIZE); 
+				memset(msg, '\0', MSG_SIZE); 
 //				printf("\n[PA1-Client@CSE489/589]$ "); 
 				fflush(stdout); 
 				if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
 					exit(-1);
-				// we can fix print stuff later here 
+				
 				char arg[100][100];
 				int i=0, j = 0;
 				for(int n =0; n < 100; n++){
-				  for(int j = 0; j < 100; j++){
-				    arg[n][j] = '\0';
-				  }
+					for(int j = 0; j < 100; j++){
+						arg[n][j] = '\0';
+					}
 				}
 
 				for (int n = 0; msg[n] != '\0'; n++){
@@ -703,15 +709,15 @@ void client_start(char *host_ip){
 				if (arg[0] == NULL) {
 					exit(-1);
 				}
-				//printf("%s - argsstuff\n", arg[0], strlen(arg[0])); 
+				
 
 				free(msg); 
 				msg = arg[0]; 
-    			        printf("I got: %s(size:%d chars)\n", msg, strlen(msg));
+				printf("I got: %s(size:%d chars)\n", msg, strlen(msg));
 				if (strcmp(msg,"AUTHOR")==0) {
-				  
-				  fflush(stdout);
-				  
+
+					fflush(stdout);
+
 				}
 				else if (strcmp(msg,"IP")==0)  {
 
@@ -720,85 +726,94 @@ void client_start(char *host_ip){
 
 				}
 				else if (strcmp(msg,"LOGOUT") == 0){
-				  strcpy(client_mess.command, "LOGOUT"); 
-				  if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess) ){
-				    cse4589_print_and_log("\n[LOGOUT:SUCCESS]\n");
+					strcpy(client_mess.command, "LOGOUT"); 
+					if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess) ){
+						cse4589_print_and_log("\n[LOGOUT:SUCCESS]\n");
+					}
+					else{
+						cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
+					} 
+					login_initial_state();
+					fflush(stdout); 
 
-				   }
-				  else{
-				    cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
-				  } 
-				  login_initial_state();
-				  fflush(stdout); 
-				   
-			        } 
-				else if (strcmp(msg,"LIST")==0)  {
-					strcpy(client_mess.command, "LIST");
-					if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
-						cse4589_print_and_log("\n[LIST:SUCCESS]\n");
+					else if (strcmp(msg,"LIST")==0)  {
+						strcpy(client_mess.command, "LIST");
+						if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+							cse4589_print_and_log("\n[LIST:SUCCESS]\n");
+						}
+						else
+						{
+							cse4589_print_and_log("[LIST:ERROR]\n");
+						}
+						fflush(stdout);
 					}
-					else
-					{
-						cse4589_print_and_log("[LIST:ERROR]\n");
-					}
-					fflush(stdout);
-				}
-				else if (strncmp(msg,"LOGIN",5)==0)  {
+					else if (strncmp(msg,"LOGIN",5)==0)  {
+						if setjmp(loginbuf){
+							strcpy(client_mess.command, "LOGIN");
+							if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
+								cse4589_print_and_log("\n[LOGIN:SUCCESS]\n");
+							}
+							else{
+								cse4589_print_and_log("[LOGIN:ERROR]\n");
+							}
+							longjmp(loginbuf, 0); 
+							fflush(stdout);
+						}
 
-				}else if (strncmp(msg,"SEND", 4) == 0) {
-					char *ip = arg[1];
-					printf("arg[2]%s\n",arg[2]);			
-					if(TRUE){
-						strcpy(client_mess.data,arg[2]);
-						strcpy(client_mess.ip,ip);
-						strcpy(client_mess.command,"SEND");
+					}else if (strncmp(msg,"SEND", 4) == 0) {
+						char *ip = arg[1];
+						printf("arg[2]%s\n",arg[2]);			
+						if(TRUE){
+							strcpy(client_mess.data,arg[2]);
+							strcpy(client_mess.ip,ip);
+							strcpy(client_mess.command,"SEND");
 
-						if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)){
-							printf("%s\n",client_mess.data);
-						}		
-					}
-					else {
-						cse4589_print_and_log("[SEND:ERROR]\n");
-						cse4589_print_and_log("[SEND:END]\n");
-					}
+							if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)){
+								printf("%s\n",client_mess.data);
+							}		
+						}
+						else {
+							cse4589_print_and_log("[SEND:ERROR]\n");
+							cse4589_print_and_log("[SEND:END]\n");
+						}
 
-				}else if (strcmp(msg,"BROADCAST")==0) {
-					char *mes = arg[1];
-					strcpy(client_mess.command,"BROADCAST");
-					strcpy(client_mess.data,msg);
-					if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)) {
-						
-						cse4589_print_and_log("[BROADCAST:SUCCESS]");
-					}
-					else {
-						cse4589_print_and_log("[BROADCAST:FAILED]");
+					}else if (strcmp(msg,"BROADCAST")==0) {
+						char *mes = arg[1];
+						strcpy(client_mess.command,"BROADCAST");
+						strcpy(client_mess.data,msg);
+						if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)) {
 
+							cse4589_print_and_log("[BROADCAST:SUCCESS]");
+						}
+						else {
+							cse4589_print_and_log("[BROADCAST:FAILED]");
+
+						}
 					}
-				}
-				fflush(stdout); 
+					fflush(stdout); 
 				//free(msg); 
     			/* Initialize buffer to receieve response */
 				}else {
-				struct message rec_server_mes;
+					struct message rec_server_mes;
 //se				lret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
 
-				memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
-				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
-					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
-						print_list(rec_server_mes.ls);
-						
-					}else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
-						cse4589_print_and_log("[LIST:END]\n");
-					}
-					
-					else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
-						cse4589_print_and_log("From(%s):%s\n",rec_server_mes.ip,rec_server_mes.data);
-					}
-					else{ printf("Server responded: %s", rec_server_mes.data);
+					memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
+					if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
+						if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
+							print_list(rec_server_mes.ls);
+
+						}else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
+							cse4589_print_and_log("[LIST:END]\n");
+						}
+
+						else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
+							cse4589_print_and_log("From(%s):%s\n",rec_server_mes.ip,rec_server_mes.data);
+						}
+						else{ printf("Server responded: %s", rec_server_mes.data);
 //					      return; 
-				}
-				fflush(stdout);
-			}else  {
+					}
+					fflush(stdout);
+				}else  {
 						printf("yo\n"); //	close(sock_index);
 					}	
 				}
