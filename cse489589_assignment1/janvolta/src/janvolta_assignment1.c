@@ -587,30 +587,20 @@ void login_initial_state(bool is_initial){
 
 		free(msg);
 		msg = arg[0]; 
-
-		if(strcmp(msg,"LOGIN") == 0 && is_initial){
-			//handle that you 
-			break; 
-		}
-		else if (strcmp(msg,"LOGIN") == 0 && !is_initial){
-			strcpy(client_mess.command, "LOGIN"); 
-			if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
-				cse4589_print_and_log("\n[LOGIN:SUCESS]\n"); 
-			}
-			else{
-				cse4589_print_and_log("\n[LOGIN:ERROR]\n");
-			} 
+		if(strcmp(msg,"LOGIN") == 0){
+			if(!is_initial){
+				strcpy(client_mess.command, "LOGIN"); 
+				if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
+					cse4589_print_and_log("\n[LOGIN:SUCESS]\n"); 
+				}
+				else{
+					cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+				} 
 			// ----------------------------------------SEND LIST STUFF BECAUSE ITS REQUIRED 
-			strcpy(client_mess.command, "LIST");
-			if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
-				cse4589_print_and_log("\n[LIST:SUCCESS]\n");
-			}
-			else
-			{
-				cse4589_print_and_log("[LIST:ERROR]\n");
-			}
-			fflush(stdout);
+			} 
+
 		}
+
 
 		else if (strcmp(msg, "EXIT") == 0){
 			exit(0); 
@@ -671,16 +661,17 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
-  struct message *ptr_rec_mes
+	struct message *ptr_rec_mes;
 	//int server; 
 	//struct client_message  client_mess;
-	login_initial_state(TRUE); 
+
+	bool initial_login_state = TRUE;
+	login_initial_state(initial_login_state); 
 	server = connect_to_host("128.205.36.46", "4545"); 
 
 	fd_set master_list, watch_list; 
 	FD_ZERO(&master_list);
 	FD_ZERO(&watch_list);
-
 	FD_SET(STDIN,&master_list);
 	head_socket = 0 ; 
 	while(TRUE){
@@ -716,33 +707,39 @@ void client_start(char *host_ip){
 				memset(msg, '\0', MSG_SIZE); 
 //				printf("\n[PA1-Client@CSE489/589]$ "); 
 				fflush(stdout); 
-				if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
-					exit(-1);
-				
-				char arg[100][100];
-				int i=0, j = 0;
-				for(int n =0; n < 100; n++){
-					for(int j = 0; j < 100; j++){
-						arg[n][j] = '\0';
+				if(!initial_login_state){
+					if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
+						exit(-1);
+					
+					char arg[100][100];
+					int i=0, j = 0;
+					for(int n =0; n < 100; n++){
+						for(int j = 0; j < 100; j++){
+							arg[n][j] = '\0';
+						}
 					}
-				}
 
-				for (int n = 0; msg[n] != '\0'; n++){
-					if (msg[n] == ' ' || msg[n] == '\n' ){
-						i++;
-						j = 0;
-					}else if(msg[n] != '\n' && msg[n] != EOF){
-						arg[i][j] = msg[n];
-						j++;
+					for (int n = 0; msg[n] != '\0'; n++){
+						if (msg[n] == ' ' || msg[n] == '\n' ){
+							i++;
+							j = 0;
+						}else if(msg[n] != '\n' && msg[n] != EOF){
+							arg[i][j] = msg[n];
+							j++;
+						}
+					}
+					if (arg[0] == NULL) {
+						exit(-1);
 					}
 				}
-				if (arg[0] == NULL) {
-					exit(-1);
+				else{
+					strcpy(msg,"REFRESH");
 				}
 				
 
 				free(msg); 
 				msg = arg[0]; 
+			
 				printf("I got: %s(size:%d chars)\n", msg, strlen(msg));
 				if (strcmp(msg,"LOGOUT") == 0){
 					strcpy(client_mess.command, "LOGOUT"); 
@@ -752,7 +749,8 @@ void client_start(char *host_ip){
 					else{
 						cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
 					} 
-					login_initial_state(FALSE);
+					login_initial_state(initial_login_state)
+					initial_login_state = TRUE;
 					fflush(stdout); 
 
 				}else if (strcmp(msg,"LIST")==0) {
