@@ -39,6 +39,7 @@
 
 #include <stdbool.h>
 #define TRUE 1 
+#define FALSE 0
 #define MSG_SIZE 256
 #define BUFFER_SIZE 256
 #define BACKLOG 5
@@ -483,7 +484,7 @@ void server_start(int port){
           			} 
           			fflush(stdout); 
           		}
-          		else if(stcmp(recieve_mes.command, "LOGIN") == 0){
+          		else if(strcmp(recieve_mes.command, "LOGIN") == 0){
           			for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
           				if(cur->fd_socket == sock_index){
           					strcpy(cur->status, "LOGGEDIN");
@@ -560,7 +561,8 @@ void server_start(int port){
 
 }
 
-
+struct client_message client_mess; 
+int server; 
 /* CLIENT SIDE!! -------------------------------------------------------------------------------------------------------*/ 
 void login_initial_state(bool is_initial){
 	while(TRUE){
@@ -592,7 +594,13 @@ void login_initial_state(bool is_initial){
 			break; 
 		}
 		else if (strcmp(msg,"LOGIN") == 0 && !is_initial){
-			longjmp(loginbuf, 1); 
+		  strcpy(client_mess.command, "LOGIN"); 
+		  if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
+		    cse4589_print_and_log("\n[LOGIN:SUCESS]\n"); 
+		  }
+		  else{
+		    cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+		  } 
 		}
 
     // put the before LOGIN commands here 
@@ -637,13 +645,14 @@ int connect_to_host(char *server_ip, char *server_port)
 }
 
 
-
+//struct client_message client_mess;
+//int server; 
 void client_start(char *host_ip){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
 
-	int server; 
-	struct client_message  client_mess;
+	//int server; 
+	//struct client_message  client_mess;
 	login_initial_state(TRUE); 
 	server = connect_to_host("128.205.36.46", "4545"); 
 
@@ -736,7 +745,7 @@ void client_start(char *host_ip){
 					login_initial_state(FALSE);
 					fflush(stdout); 
 
-					else if (strcmp(msg,"LIST")==0) {
+				}else if (strcmp(msg,"LIST")==0) {
 						strcpy(client_mess.command, "LIST");
 						if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 							cse4589_print_and_log("\n[LIST:SUCCESS]\n");
@@ -747,20 +756,8 @@ void client_start(char *host_ip){
 						}
 						fflush(stdout);
 					}
-					else if (strncmp(msg,"LOGIN",5)==0)  {
-						if (setjmp(loginbuf)){
-							strcpy(client_mess.command, "LOGIN");
-							if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
-								cse4589_print_and_log("\n[LOGIN:SUCCESS]\n");
-							}
-							else{
-								cse4589_print_and_log("[LOGIN:ERROR]\n");
-							}
-							longjmp(loginbuf, 0); 
-							fflush(stdout);
-						}
-
-					}else if (strncmp(msg,"SEND", 4) == 0) {
+			
+					else if (strncmp(msg,"SEND", 4) == 0) {
 						char *ip = arg[1];
 						printf("arg[2]%s\n",arg[2]);			
 						if(TRUE){
