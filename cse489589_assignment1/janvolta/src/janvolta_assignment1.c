@@ -702,40 +702,48 @@ void client_start(char *host_ip){
 		}
 		for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
 			if(!FD_ISSET(sock_index,&watch_list)) continue;
+			if(initial_login_state){
+					strcpy(client_mess.command, "LIST");
+					if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+						cse4589_print_and_log("\n[LIST:SUCCESS]\n");
+					}
+					else
+					{
+						cse4589_print_and_log("[LIST:ERROR]\n");
+					}
+					initial_login_state = FALSE; 
+			}
 			if (sock_index == STDIN) {
 				char *msg = (char *) malloc(sizeof(char)*MSG_SIZE); 
 				memset(msg, '\0', MSG_SIZE); 
 //				printf("\n[PA1-Client@CSE489/589]$ "); 
 				fflush(stdout); 
-				if(!initial_login_state){
-					if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
-						exit(-1);
-					
-					char arg[100][100];
-					int i=0, j = 0;
-					for(int n =0; n < 100; n++){
-						for(int j = 0; j < 100; j++){
-							arg[n][j] = '\0';
-						}
-					}
-
-					for (int n = 0; msg[n] != '\0'; n++){
-						if (msg[n] == ' ' || msg[n] == '\n' ){
-							i++;
-							j = 0;
-						}else if(msg[n] != '\n' && msg[n] != EOF){
-							arg[i][j] = msg[n];
-							j++;
-						}
-					}
-					if (arg[0] == NULL) {
-						exit(-1);
-					}
-				}
-				else{
-					strcpy(msg,"REFRESH");
-				}
 				
+				if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
+					exit(-1);
+				
+				char arg[100][100];
+				int i=0, j = 0;
+				for(int n =0; n < 100; n++){
+					for(int j = 0; j < 100; j++){
+						arg[n][j] = '\0';
+					}
+				}
+
+				for (int n = 0; msg[n] != '\0'; n++){
+					if (msg[n] == ' ' || msg[n] == '\n' ){
+						i++;
+						j = 0;
+					}else if(msg[n] != '\n' && msg[n] != EOF){
+						arg[i][j] = msg[n];
+						j++;
+					}
+				}
+				if (arg[0] == NULL) {
+					exit(-1);
+				}
+
+
 
 				free(msg); 
 				msg = arg[0]; 
