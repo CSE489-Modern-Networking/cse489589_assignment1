@@ -485,6 +485,7 @@ void server_start(int port){
 			      break;
 			    }
 			  } 
+			  fflush(stdout); 
 			}
           		else if (strcmp(recieve_mes.command,"SEND") == 0){
           			printf("ACCEPT\n"); 
@@ -582,7 +583,11 @@ void login_initial_state(){
 		msg = arg[0]; 
 		if(strcmp(msg,"LOGIN") == 0){
 			//handle that you 
-			break; 
+		   
+		   
+		   
+		  break; 
+
 		}
     // put the before LOGIN commands here 
 
@@ -659,8 +664,8 @@ void client_start(char *host_ip){
 
 		memcpy(&watch_list, &master_list, sizeof(master_list));
 		
-		char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
-		memset(msg, '\0', MSG_SIZE);
+		//char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
+		//memset(msg, '\0', MSG_SIZE);
 
 		selret = select(head_socket + 1, &watch_list, NULL, NULL, NULL);
 		int ip_char_counter;	
@@ -671,20 +676,26 @@ void client_start(char *host_ip){
 		for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
 			if(!FD_ISSET(sock_index,&watch_list)) continue;
 			if (sock_index == STDIN) {
-			  
+			        char *msg = (char *) malloc(sizeof(char)*MSG_SIZE); 
+			        memset(msg, '\0', MSG_SIZE); 
 //				printf("\n[PA1-Client@CSE489/589]$ "); 
+				fflush(stdout); 
 				if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
 					exit(-1);
 				// we can fix print stuff later here 
 				char arg[100][100];
 				int i=0, j = 0;
-				
+				for(int n =0; n < 100; n++){
+				  for(int j = 0; j < 100; j++){
+				    arg[n][j] = '\0';
+				  }
+				}
 
 				for (int n = 0; msg[n] != '\0'; n++){
 					if (msg[n] == ' ' || msg[n] == '\n' ){
 						i++;
 						j = 0;
-					}else{
+					}else if(msg[n] != '\n' && msg[n] != EOF){
 						arg[i][j] = msg[n];
 						j++;
 					}
@@ -692,12 +703,13 @@ void client_start(char *host_ip){
 				if (arg[0] == NULL) {
 					exit(-1);
 				}
+				//printf("%s - argsstuff\n", arg[0], strlen(arg[0])); 
 
 				free(msg); 
 				msg = arg[0]; 
-    			        printf("I got: %s(size:%d chars)", msg, strlen(msg));
+    			        printf("I got: %s(size:%d chars)\n", msg, strlen(msg));
 				if (strcmp(msg,"AUTHOR")==0) {
-				  printf("oh no"); 
+				  
 				  fflush(stdout);
 				  
 				}
@@ -717,7 +729,8 @@ void client_start(char *host_ip){
 				    cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
 				  } 
 				  login_initial_state();
-				  fflush(stdout);
+				  fflush(stdout); 
+				   
 			        } 
 				else if (strcmp(msg,"LIST")==0)  {
 					strcpy(client_mess.command, "LIST");
@@ -762,7 +775,7 @@ void client_start(char *host_ip){
 
 					}
 				}
-				fflush(stdin); 
+				fflush(stdout); 
 				//free(msg); 
     			/* Initialize buffer to receieve response */
 				}else {
@@ -777,6 +790,7 @@ void client_start(char *host_ip){
 					}else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
 						cse4589_print_and_log("[LIST:END]\n");
 					}
+					
 					else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
 						cse4589_print_and_log("From(%s):%s\n",rec_server_mes.ip,rec_server_mes.data);
 					}
