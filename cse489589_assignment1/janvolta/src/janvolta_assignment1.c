@@ -55,7 +55,7 @@
 void server_start(int port);
 int connect_to_host(char *server_ip, char* server_port);
 void client_start();  
-void login_initial_state();
+void login_initial_state(bool is_initial);
 bool ip_valid(char *ip); 
 jmp_buf loginbuf;
 /**
@@ -733,10 +733,10 @@ void client_start(char *host_ip){
 					else{
 						cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
 					} 
-					login_initial_state();
+					login_initial_state(FALSE);
 					fflush(stdout); 
 
-					else if (strcmp(msg,"LIST")==0)  {
+					else if (strcmp(msg,"LIST")==0) {
 						strcpy(client_mess.command, "LIST");
 						if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 							cse4589_print_and_log("\n[LIST:SUCCESS]\n");
@@ -748,7 +748,7 @@ void client_start(char *host_ip){
 						fflush(stdout);
 					}
 					else if (strncmp(msg,"LOGIN",5)==0)  {
-						if setjmp(loginbuf){
+						if (setjmp(loginbuf)){
 							strcpy(client_mess.command, "LOGIN");
 							if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
 								cse4589_print_and_log("\n[LOGIN:SUCCESS]\n");
