@@ -373,7 +373,7 @@ void server_start(int port){
             }
             else if(strcmp(cmd, "STATISTICS\n") == 0){
             		int i = 0;
-		
+			 
           			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
           				if (i== 5) break;
           				i++;
