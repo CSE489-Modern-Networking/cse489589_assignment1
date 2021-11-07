@@ -31,7 +31,7 @@
 #include <strings.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+z#include <sys/types.h>
 #include <netdb.h>
 #include "../include/global.h"
 #include "../include/logger.h"
@@ -595,13 +595,9 @@ void login_initial_state(bool is_initial){
 				}
 				else{
 					cse4589_print_and_log("\n[LOGIN:ERROR]\n");
-				}
-				return;
+				} 
 			// ----------------------------------------SEND LIST STUFF BECAUSE ITS REQUIRED 
-			}
-			else{
-			  break; 
-			}
+			} 
 
 		}
 
@@ -678,13 +674,6 @@ void client_start(char *host_ip){
 	FD_ZERO(&watch_list);
 	FD_SET(STDIN,&master_list);
 	head_socket = 0 ; 
-	strcpy(client_mess.command, "LIST");
-	if(send(server,&client_mess,sizeof(client_mess),0)==sizeof(client_mess)){
-	  cse4589_print_and_log("\n[LIST:SUCCESS]\n");
-	}
-	else{
-	  cse4589_print_and_log("[LIST:ERROR]\n");
-	}
 	while(TRUE){
 
 	  //printf("\n[PA1-Client@CSE489/589]$ ");
@@ -717,36 +706,42 @@ void client_start(char *host_ip){
 				char *msg = (char *) malloc(sizeof(char)*MSG_SIZE); 
 				memset(msg, '\0', MSG_SIZE); 
 //				printf("\n[PA1-Client@CSE489/589]$ "); 
-				fflush(stdout); 
-				
-				if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
-					exit(-1);
-				
-				char arg[100][100];
-				int i=0, j = 0;
-				for(int n =0; n < 100; n++){
-					for(int j = 0; j < 100; j++){
-						arg[n][j] = '\0';
+				fflush(stdout);
+				char arg[100][100]; 
+				if(!initial_login_state){
+					if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
+						exit(-1);
+					
+					//char arg[100][100];
+					int i=0, j = 0;
+					for(int n =0; n < 100; n++){
+						for(int j = 0; j < 100; j++){
+							arg[n][j] = '\0';
+						}
 					}
-				}
 
-				for (int n = 0; msg[n] != '\0'; n++){
-					if (msg[n] == ' ' || msg[n] == '\n' ){
-						i++;
-						j = 0;
-					}else if(msg[n] != '\n' && msg[n] != EOF){
-						arg[i][j] = msg[n];
-						j++;
+					for (int n = 0; msg[n] != '\0'; n++){
+						if (msg[n] == ' ' || msg[n] == '\n' ){
+							i++;
+							j = 0;
+						}else if(msg[n] != '\n' && msg[n] != EOF){
+							arg[i][j] = msg[n];
+							j++;
+						}
 					}
+					if (arg[0] == NULL) {
+						exit(-1);
+					}
+					free(msg);
+					msg = arg[0];
 				}
-				if (arg[0] == NULL) {
-					exit(-1);
+				else{
+					strcpy(msg,"REFRESH");
 				}
+				
 
-
-
-				free(msg); 
-				msg = arg[0]; 
+				//free(msg); 
+				//msg = arg[0]; 
 			
 				printf("I got: %s(size:%d chars)\n", msg, strlen(msg));
 				if (strcmp(msg,"LOGOUT") == 0){
@@ -757,8 +752,8 @@ void client_start(char *host_ip){
 					else{
 						cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
 					} 
-					login_initial_state(FALSE);
-					//initial_login_state = FALSE;
+					login_initial_state(initial_login_state)
+					initial_login_state = TRUE;
 					fflush(stdout); 
 
 				}else if (strcmp(msg,"LIST")==0) {
