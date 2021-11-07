@@ -452,6 +452,7 @@ void server_start(int port){
           		printf("\n");  
           		if(strcmp(recieve_mes.command,"LIST") ==0 ){
           			int i = 0;
+				bool finished = TRUE;
 			//	print_list(&server_ls);
 		//		print_full_list(server_ls);
           			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
@@ -462,13 +463,23 @@ void server_start(int port){
           				strcpy(server_mes.command,"LIST");
           				server_mes.ls=	send_ls;
           				if(send(sock_index,&server_mes,sizeof(server_mes),0) == sizeof(server_mes) ){
-          					printf("list_sent\n");
+					  //printf("list_sent\n");
           				}
+					else{
+					  finished = FALSE;
+					  cse4589_print_and_log("[LIST:ERROR]\n");
+					  break; 
+					}
+					
 
-          			}	
-          			strcpy(server_mes.command,"LISTEND");
-
-          			if(send(fdaccept, &server_mes, sizeof(server_mes), 0) == sizeof(server_mes)) {
+          			}
+				if(finished){
+				  strcpy(server_mes.command,"LISTEND_S");
+				}
+				else{
+				  strcpy(server_mes.command,"LISTEND_F");
+				}
+          			if(send(sock_index, &server_mes, sizeof(server_mes), 0) == sizeof(server_mes)) {
           				printf("Done!\n");
           			}
           			fflush(stdout);
@@ -520,6 +531,7 @@ void server_start(int port){
           				strcpy(server_mes.command,"MESSAGE");
           				strcpy(server_mes.ip,send_ip);
           				strcpy(server_mes.data,recieve_mes.data);
+					printf("what the client messaged: %s\n",recieve_mes.data);
           				if (send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
           					cse4589_print_and_log("[RELAYED:SUCCESS]\n");
           					cse4589_print_and_log("%s to %s of(%s)\n",send_ip,recv_ip,server_mes.data);
@@ -778,10 +790,11 @@ void client_start(char *host_ip){
 					char *ip = arg[1];
 					printf("arg[2]%s\n",arg[2]);			
 					if(TRUE){
+					  printf("WENT THRU SEND");
 						strcpy(client_mess.data,arg[2]);
 						strcpy(client_mess.ip,ip);
 						strcpy(client_mess.command,"SEND");
-
+						printf("size of client send: %d\n",sizeof(client_mess));
 						if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)){
 							printf("%s\n",client_mess.data);
 						}		
@@ -817,10 +830,12 @@ void client_start(char *host_ip){
 						print_list(rec_server_mes.ls);
 						ptr_rec_mes = &rec_server_mes; 
 
-					}else if(strcmp(rec_server_mes.command,"LISTEND") == 0)  {
+					}else if(strcmp(rec_server_mes.command,"LISTEND_S") == 0)  {
 						cse4589_print_and_log("[LIST:END]\n");
+					}else if(strcmp(rec_server_mes.command,"LISTEND_F")==0){
+					  cse4589_print_and_log("[LIST:ERROR]\n");
 					}
-
+					
 					else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
 						cse4589_print_and_log("From(%s):%s\n",rec_server_mes.ip,rec_server_mes.data);
 					}
