@@ -677,7 +677,8 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
-	char lst_appender = (char*) malloc(200*sizeof(char));;
+	char *lst_appender = (char*) malloc(200*sizeof(char));
+  memset(lst_appender, '\0', 200);
 	//int server; 
 	//struct client_message  client_mess;
 
@@ -774,10 +775,12 @@ void client_start(char *host_ip){
 					fflush(stdout); 
 
 				}else if (strcmp(msg,"LIST")==0) {
-					cse4589_print_and_log(&lst_appender);
+					cse4589_print_and_log(lst_appender);
 				}
 				else if (strcmp(msg,"REFRESH") == 0){
-          char lst_appender[100];
+          free(lst_appender);
+          char *lst_appender = (char*) malloc(200*sizeof(char));
+          memset(lst_appender, '\0', 200);
 					strcpy(client_mess.command, "LIST");
 					if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 						cse4589_print_and_log("\n[LIST:SUCCESS]\n");
@@ -829,7 +832,15 @@ void client_start(char *host_ip){
 				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
 					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
 						print_list(rec_server_mes.ls);
-            sprintf(&lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+            if(strlen(lst_appender) == 0){ // first initialization
+              sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+            }
+            else{
+              char temp[100]; 
+              sprintf(temp, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+              strcat(lst_appender, temp); 
+            } 
+              
 						 
 					}else if(strcmp(rec_server_mes.command,"LISTEND_S") == 0)  {
 						cse4589_print_and_log("[LIST:END]\n");
