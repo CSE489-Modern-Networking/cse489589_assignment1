@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 	printf("Exiting");
 	return 0;
 }
-char author[250] = "I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n\0"; 
+char author[250] = "AUTHOR:I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n\0"; 
 
 bool is_port(char *value){
 	for (int i = 0;i != '\0'; i++) {
