@@ -677,7 +677,7 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
-	char lst_appender[100];
+	char lst_appender = (char*) malloc(200*sizeof(char));;
 	//int server; 
 	//struct client_message  client_mess;
 
@@ -777,6 +777,7 @@ void client_start(char *host_ip){
 					cse4589_print_and_log(lst_appender);
 				}
 				else if (strcmp(msg,"REFRESH") == 0){
+          char lst_appender[100];
 					strcpy(client_mess.command, "LIST");
 					if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 						cse4589_print_and_log("\n[LIST:SUCCESS]\n");
