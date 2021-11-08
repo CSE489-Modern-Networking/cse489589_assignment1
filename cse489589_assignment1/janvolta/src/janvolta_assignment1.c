@@ -615,16 +615,23 @@ void login_initial_state(bool is_initial){
 
 		}
 
-
+    print(msg);
 		else if (strcmp(msg, "EXIT") == 0){
 			exit(0); 
 		}
 		else if (strcmp(msg,"AUTHOR")==0) {
-
+      char *author = (char*) malloc(sizeof(char)*100);
+      strcpy(author, "I, jholtzma,janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
+      cse4589_print_and_log("\n[AUTHOR:SUCCESS]\n");
+      cse4589_print_and_log("%s\n". author);
+      cse4589_print_and_log("[AUTHOR:END]\n");
 
 		}
 		else if (strcmp(msg,"IP")==0)  {
-
+      char ip[32];
+      struct sockaddr_in client_addr; 
+      inet_ntop(AF_INET,&client_addr.sin_addr.s_addr,ip, INET_ADDRSTRLEN);
+      printf(ip);
 		}
 		else if (strcmp(msg,"PORT")==0)  {
 
