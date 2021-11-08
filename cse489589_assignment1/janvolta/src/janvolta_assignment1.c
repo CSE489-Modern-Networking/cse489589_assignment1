@@ -209,9 +209,7 @@ bool ip_valid(char *ip){
 	struct sockaddr_in sock;
 	return inet_pton(AF_INET, ip,&sock.sin_addr) ? true: false;
 }
-char *author = malloc(sizeof(char) * 200);
-memset(author, '\0'. 200);  
-strcpy(author, "I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n");
+
 int main(int argc, char **argv)
 {
 	/*Init. Logger*/
@@ -243,6 +241,7 @@ int main(int argc, char **argv)
 	printf("Exiting");
 	return 0;
 }
+char author[100] = "I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n\0"; 
 
 bool is_port(char *value){
 	for (int i = 0;i != '\0'; i++) {
