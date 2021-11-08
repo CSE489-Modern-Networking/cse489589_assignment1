@@ -411,7 +411,7 @@ void server_start(int port){
 
           	getnameinfo((struct sockaddr *)&client_addr, caddr_len,host, sizeof(host), 0,0,0);
           	struct ls_element *top = malloc(sizeof(struct ls_element));
-          	char status[ 20] = "LOGGEDIN";
+          	char status[ 10] = "logged-in\0";
           	int id = (server_ls != NULL)? server_ls->ls_id+1 : 0;
           	ls_set_all(
           		host	
@@ -458,13 +458,15 @@ void server_start(int port){
           			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
           				if (i== 5) break;
           				i++;
-          				print_list(*cur);
-          				copy(cur,&send_ls);		
-          				strcpy(server_mes.command,"LIST");
-          				server_mes.ls=	send_ls;
-          				if(send(sock_index,&server_mes,sizeof(server_mes),0) == sizeof(server_mes) ){
-					  //printf("list_sent\n");
-          				}
+                  if(strcmp(cur->status,"logged-in")){
+                    print_list(*cur);
+                    copy(cur,&send_ls);		
+                    strcpy(server_mes.command,"LIST");
+                    server_mes.ls=	send_ls;
+                    if(send(sock_index,&server_mes,sizeof(server_mes),0) == sizeof(server_mes) ){
+              //printf("list_sent\n");
+                    }
+                  }
 					else{
 					  finished = FALSE;
 					  cse4589_print_and_log("[LIST:ERROR]\n");
@@ -488,7 +490,7 @@ void server_start(int port){
 			  //do the forloopy loopy thingy
           			for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
           				if(cur->fd_socket == sock_index){
-          					strcpy(cur->status, "LOGOUT");
+          					strcpy(cur->status, "logged-out");
           					break;
           				}
           			} 
@@ -497,7 +499,7 @@ void server_start(int port){
           		else if(strcmp(recieve_mes.command, "LOGIN") == 0){
           			for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
           				if(cur->fd_socket == sock_index){
-          					strcpy(cur->status, "LOGGEDIN");
+          					strcpy(cur->status, "logged-in");
           					break;
           				}
           			} 
