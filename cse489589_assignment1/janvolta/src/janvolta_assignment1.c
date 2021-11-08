@@ -361,8 +361,8 @@ void server_start(int port){
             	int hostname;
             	hostname = gethostname(hostbuffer, sizeof(hostbuffer));
             	struct hostent host_entry;
-           //   host_entry = gethostbyname(hostbuffer);
-			//IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
+              host_entry = gethostbyname(hostbuffer);
+			        IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
             	printf("%s", IPbuffer);
             }	
             else if(strcmp(cmd,"LIST") == 0 ) {
@@ -582,6 +582,11 @@ void login_initial_state(bool is_initial){
 			exit(-1);
 		char arg[100][100];
 		int i=0, j = 0;
+    for (int a = 0; a <100; a++){
+      for(int b = 0; b < 100; b++){
+        arg[a][b] = '\0'; 
+      }
+    }
 		for (int n = 0; msg[n] != '\0'; n++){
 			if (msg[n] == ' ' || msg[n] == '\n' ){
 				i++;
@@ -615,12 +620,12 @@ void login_initial_state(bool is_initial){
 
 		}
 
-    print(msg);
+    
 		else if (strcmp(msg, "EXIT") == 0){
 			exit(0); 
 		}
 		else if (strcmp(msg,"AUTHOR")==0) {
-      char *author = (char*) malloc(sizeof(char)*100);
+      char *author = (char*) malloc(sizeof(char)*200);
       strcpy(author, "I, jholtzma,janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
       cse4589_print_and_log("\n[AUTHOR:SUCCESS]\n");
       cse4589_print_and_log("%s\n". author);
@@ -628,10 +633,14 @@ void login_initial_state(bool is_initial){
 
 		}
 		else if (strcmp(msg,"IP")==0)  {
-      char ip[32];
-      struct sockaddr_in client_addr; 
-      inet_ntop(AF_INET,&client_addr.sin_addr.s_addr,ip, INET_ADDRSTRLEN);
-      printf(ip);
+      	char *IPbuffer;
+        char hostbuffer[256];
+        int hostname;
+        hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+        struct hostent host_entry;
+        host_entry = gethostbyname(hostbuffer);
+        IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
+        printf("%s", IPbuffer);
 		}
 		else if (strcmp(msg,"PORT")==0)  {
 
