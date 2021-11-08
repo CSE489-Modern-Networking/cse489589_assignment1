@@ -67,7 +67,7 @@ bool ip_valid(char *ip);
  * @return 0 EXIT_SUCCESS
  */
 
-
+char author =  "I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n"; 
 struct client_message {
 	char ip[32];
 	char command[20];
@@ -347,13 +347,10 @@ void server_start(int port){
             printf("\nI got123: %s\n", cmd);
             
             //Process PA1 commands here ...
-            if(strcmp(cmd, "AUTHOR") == 0){
-            	char *author = (char*) malloc(sizeof(char)*100);
-            	strcpy(author, "I, jholtzma,janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
-             // if(send(fdaccept, author, strlen(author), 0) == strlen(buffer))
-             //   printf("SUCCESS!!\n");
-            	fflush(stdout);
-            	free(author); 
+            if(strcmp(cmd, "AUTHOR\n") == 0){
+            	cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
+              cse4589_print_and_log(author); 
+              cse4589_print_and_log("[AUTHOR:END]"); 
             }
             if(strcmp(cmd, "IP") == 0){
             	char *IPbuffer;
@@ -625,22 +622,20 @@ void login_initial_state(bool is_initial){
 			exit(0); 
 		}
 		else if (strcmp(msg,"AUTHOR")==0) {
-      char *author = (char*) malloc(sizeof(char)*200);
-      strcpy(author, "I, jholtzma,janvolta, jmchoi, and zemingzh, have read and understood the course academic integerity policy \n\0"); 
-      cse4589_print_and_log("\n[AUTHOR:SUCCESS]\n");
-      cse4589_print_and_log("%s\n". author);
-      cse4589_print_and_log("[AUTHOR:END]\n");
+     cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
+      cse4589_print_and_log(author); 
+      cse4589_print_and_log("[AUTHOR:END]");
 
 		}
 		else if (strcmp(msg,"IP")==0)  {
-      	char *IPbuffer;
-        char hostbuffer[256];
-        int hostname;
-        hostname = gethostname(hostbuffer, sizeof(hostbuffer));
-        struct hostent host_entry;
-        host_entry = gethostbyname(hostbuffer);
-        IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
-        printf("%s", IPbuffer);
+      	// char *IPbuffer;
+        // char hostbuffer[256];
+        // int hostname;
+        // hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+        // struct hostent host_entry;
+        // host_entry = gethostbyname(hostbuffer);
+        // IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
+        // printf("%s", IPbuffer);
 		}
 		else if (strcmp(msg,"PORT")==0)  {
 
@@ -790,7 +785,11 @@ void client_start(char *host_ip){
 
 				}else if (strcmp(msg,"LIST")==0) {
 					cse4589_print_and_log(lst_appender);
-				}
+				}else if (strcmp(msg,"AUTHOR") == 0){
+          cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
+          cse4589_print_and_log(author); 
+          cse4589_print_and_log("[AUTHOR:END]");
+        }
 				else if (strcmp(msg,"REFRESH") == 0){
           free(lst_appender);
           char *lst_appender = (char*) malloc(200*sizeof(char));
