@@ -67,7 +67,6 @@ bool ip_valid(char *ip);
  * @return 0 EXIT_SUCCESS
  */
 
-char author =  "I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n"; 
 struct client_message {
 	char ip[32];
 	char command[20];
@@ -210,7 +209,9 @@ bool ip_valid(char *ip){
 	struct sockaddr_in sock;
 	return inet_pton(AF_INET, ip,&sock.sin_addr) ? true: false;
 }
-
+char *author = malloc(sizeof(char) * 200);
+memset(author, '\0'. 200);  
+strcpy(author, "I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n");
 int main(int argc, char **argv)
 {
 	/*Init. Logger*/
