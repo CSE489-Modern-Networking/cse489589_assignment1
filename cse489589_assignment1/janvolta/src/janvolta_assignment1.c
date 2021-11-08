@@ -350,7 +350,7 @@ void server_start(int port){
             if(strcmp(cmd, "AUTHOR\n") == 0){
             	cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
               cse4589_print_and_log(author); 
-              cse4589_print_and_log("[AUTHOR:END]"); 
+              cse4589_print_and_log("[AUTHOR:END\n]"); 
             }
             if(strcmp(cmd, "IP") == 0){
             
@@ -617,7 +617,7 @@ void login_initial_state(bool is_initial){
 		else if (strcmp(msg,"AUTHOR")==0) {
      cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
       cse4589_print_and_log(author); 
-      cse4589_print_and_log("[AUTHOR:END]");
+      cse4589_print_and_log("[AUTHOR:END\n]");
 
 		}
 		else if (strcmp(msg,"IP")==0)  {
@@ -781,7 +781,7 @@ void client_start(char *host_ip){
 				}else if (strcmp(msg,"AUTHOR") == 0){
           cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
           cse4589_print_and_log(author); 
-          cse4589_print_and_log("[AUTHOR:END]");
+          cse4589_print_and_log("[AUTHOR:END\n]");
         }
 				else if (strcmp(msg,"REFRESH") == 0){
           free(lst_appender);
