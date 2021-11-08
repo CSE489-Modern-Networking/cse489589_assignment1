@@ -779,14 +779,14 @@ void client_start(char *host_ip){
 				}else if (strcmp(msg,"LIST")==0) {
 					cse4589_print_and_log(lst_appender);
 				}else if (strcmp(msg,"AUTHOR") == 0){
-          cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
-          cse4589_print_and_log(author); 
-          cse4589_print_and_log("[AUTHOR:END]\n");
+          			cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
+          			cse4589_print_and_log(author); 
+          			cse4589_print_and_log("[AUTHOR:END]\n");
         }
 				else if (strcmp(msg,"REFRESH") == 0){
-          free(lst_appender);
-          char *lst_appender = (char*) malloc(200*sizeof(char));
-          memset(lst_appender, '\0', 200);
+          			free(lst_appender);
+          			char *lst_appender = (char*) malloc(200*sizeof(char));
+          			memset(lst_appender, '\0', 200);
 					strcpy(client_mess.command, "LIST");
 					if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
 						cse4589_print_and_log("\n[LIST:SUCCESS]\n");
