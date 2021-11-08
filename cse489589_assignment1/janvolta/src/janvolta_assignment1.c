@@ -376,9 +376,7 @@ void server_start(int port){
             		if (i== 5) break;
             		i++;
             		print_statistics(*cur);
-            		copy(cur,&send_ls);		
-            		strcpy(server_mes.command,"STATISTICS");
-            		server_mes.ls=	send_ls;
+            		
 
             	}	
 
@@ -458,7 +456,7 @@ void server_start(int port){
           			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
           				if (i== 5) break;
           				i++;
-                  if(strcmp(cur->status,"logged-in")){
+                  if(strcmp(cur->status,"logged-in") == 0){
                     print_list(*cur);
                     copy(cur,&send_ls);		
                     strcpy(server_mes.command,"LIST");
@@ -466,14 +464,12 @@ void server_start(int port){
                     if(send(sock_index,&server_mes,sizeof(server_mes),0) == sizeof(server_mes) ){
               //printf("list_sent\n");
                     }
+                    else{
+                        finished = FALSE;
+                        cse4589_print_and_log("[LIST:ERROR]\n");
+                        break; 
+                      }
                   }
-					else{
-					  finished = FALSE;
-					  cse4589_print_and_log("[LIST:ERROR]\n");
-					  break; 
-					}
-					
-
           			}
 				if(finished){
 				  strcpy(server_mes.command,"LISTEND_S");
