@@ -774,7 +774,7 @@ void client_start(char *host_ip){
 					fflush(stdout); 
 
 				}else if (strcmp(msg,"LIST")==0) {
-					cse4589_print_and_log(lst_appender);
+					cse4589_print_and_log(&lst_appender);
 				}
 				else if (strcmp(msg,"REFRESH") == 0){
           char lst_appender[100];
@@ -829,7 +829,7 @@ void client_start(char *host_ip){
 				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
 					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
 						print_list(rec_server_mes.ls);
-            sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+            sprintf(&lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
 						 
 					}else if(strcmp(rec_server_mes.command,"LISTEND_S") == 0)  {
 						cse4589_print_and_log("[LIST:END]\n");
