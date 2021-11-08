@@ -519,7 +519,6 @@ void server_start(int port){
 					}
 				//	print_list(*cur);
 				}				
-
 			  }
             }
 			//fflush(stdout);
@@ -528,7 +527,6 @@ void server_start(int port){
       }
     }
   }
-
 }
 
 
