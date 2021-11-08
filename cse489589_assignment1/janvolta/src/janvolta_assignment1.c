@@ -353,14 +353,7 @@ void server_start(int port){
               cse4589_print_and_log("[AUTHOR:END]"); 
             }
             if(strcmp(cmd, "IP") == 0){
-            	char *IPbuffer;
-            	char hostbuffer[256];
-            	int hostname;
-            	hostname = gethostname(hostbuffer, sizeof(hostbuffer));
-            	struct hostent host_entry;
-              host_entry = gethostbyname(hostbuffer);
-			        IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
-            	printf("%s", IPbuffer);
+            
             }	
             else if(strcmp(cmd,"LIST") == 0 ) {
 		//		cse4589_print_and_log("%i\n",fdsocket);
