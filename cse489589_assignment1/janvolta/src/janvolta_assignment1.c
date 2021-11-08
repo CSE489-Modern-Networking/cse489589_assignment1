@@ -677,7 +677,7 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
-	char lst_appender = '\0';
+	char lst_appender[100];
 	//int server; 
 	//struct client_message  client_mess;
 
