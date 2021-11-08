@@ -677,7 +677,7 @@ int connect_to_host(char *server_ip, char *server_port)
 void client_start(char *host_ip){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
-	struct message *ptr_rec_mes;
+	char lst_appender = '\0';
 	//int server; 
 	//struct client_message  client_mess;
 
@@ -774,7 +774,7 @@ void client_start(char *host_ip){
 					fflush(stdout); 
 
 				}else if (strcmp(msg,"LIST")==0) {
-					print_list(ptr_rec_mes->ls);
+					cse4589_print_and_log(lst_appender);
 				}
 				else if (strcmp(msg,"REFRESH") == 0){
 					strcpy(client_mess.command, "LIST");
@@ -828,8 +828,8 @@ void client_start(char *host_ip){
 				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
 					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
 						print_list(rec_server_mes.ls);
-						ptr_rec_mes = &rec_server_mes; 
-
+            sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+						 
 					}else if(strcmp(rec_server_mes.command,"LISTEND_S") == 0)  {
 						cse4589_print_and_log("[LIST:END]\n");
 					}else if(strcmp(rec_server_mes.command,"LISTEND_F")==0){
