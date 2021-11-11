@@ -48,6 +48,7 @@
 #define PORT 3490
 #define ip_addr_server "128.205.36.46"
 #define port_addr_server "4545"
+#define FILE_SIZE_DATA 1024
 /**
  * functions and methods 
  */
@@ -234,7 +235,7 @@ int main(int argc, char **argv)
 
  	/* this is if we want the client to run */
 	if(strcmp(argv[1], "c") == 0){
-
+		printf("yo\n");
 		client_start();  
 	}
 
@@ -331,13 +332,8 @@ void server_start(int port){
 				fflush(stdout);
 				memset(&server_mes, '\0', sizeof(server_mes));
 				if(FD_ISSET(sock_index, &watch_list)){
-
           /* Check if new command on STDIN */
 					if (sock_index == STDIN){
-
-
-
-
 						char *cmd = (char*) malloc(sizeof(char)*CMD_SIZE);
 
             if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) { //Mind the newline character that will be written to cmd
@@ -356,8 +352,7 @@ void server_start(int port){
             
             }	
             else if(strcmp(cmd,"LIST") == 0 ) {
-		//		cse4589_print_and_log("%i\n",fdsocket);
-            	//free(cmd);
+				print_list(*server_ls);
             }
             else if(strcmp(cmd, "STATISTICS\n") == 0){
             	int i = 0;
@@ -399,7 +394,7 @@ void server_start(int port){
 
           	getnameinfo((struct sockaddr *)&client_addr, caddr_len,host, sizeof(host), 0,0,0);
           	struct ls_element *top = malloc(sizeof(struct ls_element));
-          	char status[ 10] = "logged-in\0";
+          	char status[ 20] = "logged-in\0";
           	int id = (server_ls != NULL)? server_ls->ls_id+1 : 0;
           	ls_set_all(
           		host	
@@ -694,6 +689,7 @@ void client_start(char *host_ip){
 	FD_SET(STDIN,&master_list);
 	head_socket = 0 ; 
 	strcpy(client_mess.command, "LIST");
+	printf("YO\n");
 	if(send(server,&client_mess,sizeof(client_mess),0)==sizeof(client_mess)){
 	  cse4589_print_and_log("\n[LIST:SUCCESS]\n");
 	}
@@ -738,13 +734,14 @@ void client_start(char *host_ip){
 					exit(-1);
 				
 				char arg[100][100];
-				int i=0, j = 0;
 				for(int n =0; n < 100; n++){
-					for(int j = 0; j < 100; j++){
-						arg[n][j] = '\0';
-					}
+					memset(arg[n],'\0',99);
+					//for(int j = 0; j < 100; j++){
+					//	arg[n][j] = '\0';
+					//}
 				}
 
+				int i=0, j = 0;
 				for (int n = 0; msg[n] != '\0'; n++){
 					if (msg[n] == ' ' || msg[n] == '\n' ){
 						i++;
@@ -796,9 +793,8 @@ void client_start(char *host_ip){
 						cse4589_print_and_log("[LIST:ERROR]\n");
 					}
 					fflush(stdout);
-				}else if (strncmp(msg,"SEND", 4) == 0) {
+				}else if (strcmp(msg,"SEND") == 0) {
 					char *ip = arg[1];
-					printf("arg[2]%s\n",arg[2]);			
 					if(TRUE){
 					  printf("WENT THRU SEND");
 						strcpy(client_mess.data,arg[2]);
@@ -826,26 +822,72 @@ void client_start(char *host_ip){
 						cse4589_print_and_log("[BROADCAST:FAILED]");
 
 					}
+				}else if (strcmp(msg,"SENDFILE") == 0) {
+					if (i < 2 ) {printf("wrong_arg_count\n");exit(-1);}
+					char *ip = arg[1];
+					char *file_name = arg[2];
+					FILE *file = fopen(file_name,"r");
+					if (file == NULL){
+						printf("file does not exist");continue;
+					}	
+					char file_buffer[FILE_SIZE_DATA];
+
+					int reciever = 0;
+
+
+					
+
+					int sock = 0;
+    				struct sockaddr_in serv_addr;
+					if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+						printf("connect error");continue;	
+					}
+					serv_addr.sin_family = AF_INET;
+   	 				serv_addr.sin_addr.s_addr = INADDR_ANY; //INADDR_ANY always gives an IP of 0.0.0.0
+    				serv_addr.sin_port = htons(1);
+//					if (connect(fdsocket, &serv_addr, sizeof(serv_addr)) < 0) {
+//						continue;	
+//					}
+					while (fgets(file_buffer,FILE_SIZE_DATA,file) != NULL){
+						if (send(reciever,file_buffer,sizeof(file_buffer),0) == sizeof(file_buffer)) {
+							cse4589_print_and_log("[SENT %i bytes of a file]",FILE_SIZE_DATA);
+						} 
+						else {
+							cse4589_print_and_log("[SENDFILE ERROR]",FILE_SIZE_DATA);
+						}
+					
+						bzero(file_buffer,FILE_SIZE_DATA);
+					}	
+
 				}
 				fflush(stdout); 
 				//free(msg); 
     			/* Initialize buffer to receieve response */
 			}else {
+
+		//		char file_bytes[FILE_SIZE_DATA]; char file_name[] = "output.txt";
+		//		FILE *file= fopen(file_name,"w");
+		//		while(recv(sock_index,file_bytes,FILE_SIZE_DATA,0) == FILE_SIZE_DATA) {
+		//			fputs(file_bytes,file);	
+		//			bzero(file_bytes,FILE_SIZE_DATA);
+		//		}
+
 				struct message rec_server_mes;
 //se				lret = select(&head_socket + 1, &watch_list, NULL, NULL, NULL);
-				
+					
 				memset(&rec_server_mes, '\0', sizeof(rec_server_mes));
 				if(recv(server, &rec_server_mes, sizeof(rec_server_mes), 0) >= 0){
 					if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
 						print_list(rec_server_mes.ls);
-            if(strlen(lst_appender) == 0){ // first initialization
-              sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
-            }
-            else{
-              char temp[100]; 
-              sprintf(temp, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
-              strcat(lst_appender, temp); 
-            } 
+            			if(strlen(lst_appender) == 0){ // first initialization
+            			  sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+            			}
+            			else{
+            			  char temp[100]; 
+            			  
+						  sprintf(temp, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+            			  strcat(lst_appender, temp); 
+            			} 
               
 						 
 					}else if(strcmp(rec_server_mes.command,"LISTEND_S") == 0)  {
