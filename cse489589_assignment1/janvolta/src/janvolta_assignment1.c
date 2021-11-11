@@ -55,7 +55,7 @@
 void server_start(int port);
 int connect_to_host(char *server_ip, char* server_port);
 void client_start();  
-void login_initial_state(bool is_initial);
+void login_initial_state(bool is_initial, int port);
 bool ip_valid(char *ip); 
 
 /**
@@ -256,7 +256,7 @@ int main(int argc, char **argv)
 
  	/* this is if we want the client to run */
 	if(strcmp(argv[1], "c") == 0){
-	  char *port_number = argv[2];
+	  int port_number = atoi(argv[2]);
 		client_start(port_number);  
 	}
 
@@ -369,7 +369,7 @@ void server_start(int port){
           
             //Process PA1 commands here ...
             if(strcmp(cmd, "AUTHOR\n") == 0){
-            	cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
+              cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
               cse4589_print_and_log(author); 
               cse4589_print_and_log("[AUTHOR:END]\n"); 
             }
@@ -420,16 +420,18 @@ void server_start(int port){
 		//    struct ls_element *next,
 		//	struct ls_element *temp
           	char ip[32];
+		
           	inet_ntop(AF_INET,&client_addr.sin_addr.s_addr,ip, INET_ADDRSTRLEN);
           	char host[40];
-
+		
           	getnameinfo((struct sockaddr *)&client_addr, caddr_len,host, sizeof(host), 0,0,0);
+	
           	struct ls_element *top = malloc(sizeof(struct ls_element));
           	char status[ 10] = "logged-in\0";
-          	int id = (server_ls != NULL)? server_ls->ls_id+1 : 0;
+          	int id = (server_ls != NULL)? server_ls->ls_id+1 : 1;
           	ls_set_all(
           		host	
-          		,client_addr.sin_port
+          		,ntohs(client_addr.sin_port)
           		,id
           		,0
           		,fdaccept
@@ -469,6 +471,7 @@ void server_start(int port){
 				bool finished = TRUE;
 			//	print_list(&server_ls);
 		//		print_full_list(server_ls);
+				
           			for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
           				if (i== 5) break;
           				i++;
@@ -589,7 +592,7 @@ void server_start(int port){
 struct client_message client_mess; 
 int server; 
 /* CLIENT SIDE!! -------------------------------------------------------------------------------------------------------*/ 
-void login_initial_state(bool is_initial){
+void login_initial_state(bool is_initial, int portnumber){
 	while(TRUE){
 		char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
 		printf("\n[PA1-Client@CSE489/589]$ ");
@@ -598,11 +601,11 @@ void login_initial_state(bool is_initial){
 			exit(-1);
 		char arg[100][100];
 		int i=0, j = 0;
-    for (int a = 0; a <100; a++){
-      for(int b = 0; b < 100; b++){
-        arg[a][b] = '\0'; 
-      }
-    }
+		for (int a = 0; a <100; a++){
+		  for(int b = 0; b < 100; b++){
+		    arg[a][b] = '\0'; 
+		  }
+		}
 		for (int n = 0; msg[n] != '\0'; n++){
 			if (msg[n] == ' ' || msg[n] == '\n' ){
 				i++;
@@ -651,7 +654,9 @@ void login_initial_state(bool is_initial){
 		  
 		}
 		else if (strcmp(msg,"PORT")==0)  {
-
+		  cse4589_print_and_log("[PORT:SUCCESS]\n"); 
+		  cse4589_print_and_log("PORT:%d\n",portnumber); 
+		  cse4589_print_and_log("[PORT:END]\n");
 		}
 		
 
@@ -660,64 +665,58 @@ void login_initial_state(bool is_initial){
 	}
 	return;
 }
+int fdsocket = -1; 
 
 int connect_to_host(char *server_ip, char *server_port) 
 {
+ 
+    struct sockaddr_in server;
+    memset(&server, 0, sizeof(server)); 
+    server.sin_family = AF_INET;
+    inet_pton(AF_INET, "128.205.36.46", &server.sin_addr);
+    server.sin_port = htons(4545);
+
+    if(connect(fdsocket, (struct sockaddr*)&server, sizeof(server)) < 0)
+    {
+        perror("[LOGIN:ERROR]");
+    }
+    
   
-        struct sockaddr_in my_addrs;
-	int fdsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);// return socket file descriptor
+    return fdsocket;
+}
+
+int choose_port(int port){
+    struct sockaddr_in client;
+    fdsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);// return socket file descriptor
     if(fdsocket < 0)
     {
-       perror("Failed to create socket");
+       perror("\n[LOGIN:ERROR]\n");
        return 0;
     }
 
     //setting up client socket
-    my_addrs.sin_family=AF_INET;
-    my_addrs.sin_addr.s_addr=INADDR_ANY;
-    my_addrs.sin_port=htons(5701);
-    int optval=1;
-    setsockopt(fdsocket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
-    if(bind(fdsocket, (struct  sockaddr*) &my_addrs, sizeof(struct sockaddr_in)) == 0)
+    client.sin_family=AF_INET;
+    client.sin_addr.s_addr=INADDR_ANY;
+    client.sin_port=htons(port);
+   
+    int options = 1 ;
+    //https://linux.die.net/man/3/setsockopt#:~:text=The%20setsockopt%20%28%29%20function%20shall%20set%20the%20option,the%20file%20descriptor%20specified%20by%20the%20socket%20argument.
+    setsockopt(fdsocket, SOL_SOCKET, SO_REUSEPORT, &options, sizeof(options));
+    if(bind(fdsocket, (struct  sockaddr*) &client, sizeof(struct sockaddr_in)) < 0)
     {
-    	printf("\nclient binded to port correctly\n");
-    	return 1;
-    }
-    else
-    {
-    	printf("\nError in binding client port\n");
+    	printf("\n[LOGIN:ERROR]\n");
     	return 0;
     } 
-int len;
-    struct sockaddr_in remote_server_addr;
-
-    bzero(&remote_server_addr, sizeof(remote_server_addr));
-    remote_server_addr.sin_family = AF_INET;
-    inet_pton(AF_INET, "128.205.36.46", &remote_server_addr.sin_addr);//inet_pton - convert IPv4 and IPv6 addresses from text to binary form
-    remote_server_addr.sin_port = htons(4545);//function converts the unsigned short integer hostshort from host byte order to network byte order.
-
-    if(connect(fdsocket, (struct sockaddr*)&remote_server_addr, sizeof(remote_server_addr)) < 0)
-    {
-        perror("Connect failed");
-    }
-    else{
-    	printf("\nLogged in\n");
-    }
-    return fdsocket;
+    return 1;
 }
 
-
-
-void client_start(char *port_listen){
+void client_start(int port){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
-	int fdsocket;
-
-	char *lst_appender = (char*) malloc(200*sizeof(char));
+	char *lst_appender = (char*) malloc(500*sizeof(char));
 	memset(lst_appender, '\0', 200);
-	
-
+	choose_port(port); 
 	bool initial_login_state = TRUE;
-	login_initial_state(initial_login_state); 
+	login_initial_state(initial_login_state, port); 
 	server = connect_to_host("128.205.36.46", "4545"); 
 
 	fd_set master_list, watch_list; 
@@ -732,6 +731,7 @@ void client_start(char *port_listen){
 	else{
 	  cse4589_print_and_log("[LIST:ERROR]\n");
 	}
+
 	while(TRUE){
 
 	  //printf("\n[PA1-Client@CSE489/589]$ ");
@@ -761,6 +761,7 @@ void client_start(char *port_listen){
 		for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
 			if(!FD_ISSET(sock_index,&watch_list)) continue;
 			if (sock_index == STDIN) {
+			 
 				char *msg = (char *) malloc(sizeof(char)*MSG_SIZE); 
 				memset(msg, '\0', MSG_SIZE); 
 //				printf("\n[PA1-Client@CSE489/589]$ "); 
@@ -804,13 +805,19 @@ void client_start(char *port_listen){
 					else{
 						cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
 					} 
-					login_initial_state(FALSE);
+					login_initial_state(FALSE, port);
 					//initial_login_state = FALSE;
 					fflush(stdout); 
 				
 				}else if(strcmp(msg,"IP") == 0){
 				  ip_address(); 
-				}else if (strcmp(msg,"LIST")==0) {
+				}
+				else if (strcmp(msg, "PORT") == 0){
+				  cse4589_print_and_log("[PORT:SUCCESS]\n"); 
+				  cse4589_print_and_log("PORT:%d\n",port); 
+				  cse4589_print_and_log("[PORT:END]\n");
+				}
+				else if (strcmp(msg,"LIST")==0) {
 				   cse4589_print_and_log(lst_appender);
 				}else if (strcmp(msg,"AUTHOR") == 0){
 				  cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
@@ -876,7 +883,8 @@ void client_start(char *port_listen){
               sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
             }
             else{
-              char temp[100]; 
+              char temp[500];
+	      memset(&temp, '\0', 500);
               sprintf(temp, "%-5d%-35s%-20s%-8d\n\0", rec_server_mes.ls.ls_id, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
               strcat(lst_appender, temp); 
             } 
