@@ -150,7 +150,29 @@ void print_list(struct ls_element ls){
 		ls.ls_port
 		);
 }
-
+void ip_address(){
+    char hostname[256];
+    char *IP;
+    struct hostent *client;
+   
+  
+    //transfers it to host buffer
+    if(gethostname(hostname, sizeof(hostname)) == 0){ // success
+      cse4589_print_and_log("\n[IP:SUCCESS]\n");
+      client = gethostbyname(hostname);
+      IP = inet_ntoa(*((struct in_addr*)
+                           client->h_addr_list[0]));
+      cse4589_print_and_log("IP:%s\n",IP);
+      cse4589_print_and_log("[IP:END]\n"); 
+    }
+    else{
+      cse4589_print_and_log("\n[IP:ERROR]\n"); 
+    }
+    
+  
+    return; 
+  
+}
 void print_statistics(struct ls_element ls){
   // these are place holders 
 	cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", ls.ls_id, ls.ls_hn, ls.snd_msg, ls.rcv_msg, ls.status);
@@ -234,14 +256,14 @@ int main(int argc, char **argv)
 
  	/* this is if we want the client to run */
 	if(strcmp(argv[1], "c") == 0){
-
-		client_start();  
+	  char *port_number = argv[2];
+		client_start(port_number);  
 	}
 
 	printf("Exiting");
 	return 0;
 }
-char author[250] = "AUTHOR:I, janvolta, zemingzh, jholtzma, jmchoi, have read and understood the course academic integrity policy.\n\0"; 
+char author[250] = "I, janvolta, have read and understood the course academic integrity policy.\n\0"; 
 
 bool is_port(char *value){
 	for (int i = 0;i != '\0'; i++) {
@@ -262,8 +284,9 @@ void set_message(char *command,char *ip,char *msg,struct message *m){
 // starting server function
 // stones is going to be the server .. IP ADDRESS 128.205.36.46 & PORT number 4545
 void server_start(int port){
-	printf("testing \n");
-	char port_char[4];
+	
+	char port_char[10];
+	memset(port_char,'\0', 10); 
 	sprintf(port_char,"%d",port);
 
 	struct client_message recieve_mes;
@@ -280,7 +303,7 @@ void server_start(int port){
 	hints.ai_socktype = SOCK_STREAM; 
 	hints.ai_flags = AI_PASSIVE; 
   /* Fill up address structures */ 
-	if (getaddrinfo(NULL, "4545", &hints, &res) != 0){
+	if (getaddrinfo(NULL, port_char, &hints, &res) != 0){
 		perror("getaddrinfo failed"); 
 	}
 
@@ -343,18 +366,21 @@ void server_start(int port){
             if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) { //Mind the newline character that will be written to cmd
             	exit(-1);
             }
-            
-            printf("\nI got123: %s\n", cmd);
-            
+          
             //Process PA1 commands here ...
             if(strcmp(cmd, "AUTHOR\n") == 0){
             	cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
               cse4589_print_and_log(author); 
               cse4589_print_and_log("[AUTHOR:END]\n"); 
             }
-            if(strcmp(cmd, "IP") == 0){
-            
+            else if(strcmp(cmd, "IP\n") == 0){
+	      ip_address();
             }	
+	    else if(strcmp(cmd, "PORT\n") == 0){
+	      cse4589_print_and_log("[PORT:SUCCESS]\n"); 
+	      cse4589_print_and_log("PORT:%s\n",port_char);
+	      cse4589_print_and_log("[PORT:END]\n"); 
+	    }
             else if(strcmp(cmd,"LIST") == 0 ) {
 		//		cse4589_print_and_log("%i\n",fdsocket);
             	//free(cmd);
@@ -382,7 +408,7 @@ void server_start(int port){
           	fdaccept = accept(server_socket, (struct sockaddr *)&client_addr, &caddr_len);
           	if(fdaccept < 0)
           		perror("Accept failed.");
-
+		
           	printf("\nRemote Host connected!\n");                        
 		//	char ls_hn[40],
 		//    int ls_port,	
@@ -615,20 +641,14 @@ void login_initial_state(bool is_initial){
 			exit(0); 
 		}
 		else if (strcmp(msg,"AUTHOR")==0) {
-     cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
-      cse4589_print_and_log(author); 
-      cse4589_print_and_log("[AUTHOR:END]\n");
+		  cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
+		  cse4589_print_and_log(author); 
+		  cse4589_print_and_log("[AUTHOR:END]\n");
 
 		}
 		else if (strcmp(msg,"IP")==0)  {
-      	// char *IPbuffer;
-        // char hostbuffer[256];
-        // int hostname;
-        // hostname = gethostname(hostbuffer, sizeof(hostbuffer));
-        // struct hostent host_entry;
-        // host_entry = gethostbyname(hostbuffer);
-        // IPbuffer = inet_ntoa(((struct in_addr*)host_entry-> h_addr_list[0]));
-        // printf("%s", IPbuffer);
+		  ip_address(); 
+		  
 		}
 		else if (strcmp(msg,"PORT")==0)  {
 
@@ -643,46 +663,58 @@ void login_initial_state(bool is_initial){
 
 int connect_to_host(char *server_ip, char *server_port) 
 {
-	int fdsocket; 
-	struct addrinfo hints, *res; 
-	
-  /* Set up hints structure */ 
-	memset(&hints, 0, sizeof(hints)); 
-	hints.ai_family = AF_INET; 
-	hints.ai_socktype = SOCK_STREAM; 
+  
+        struct sockaddr_in my_addrs;
+	int fdsocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);// return socket file descriptor
+    if(fdsocket < 0)
+    {
+       perror("Failed to create socket");
+       return 0;
+    }
 
-  /* Fill up address structures */ 
-	if(getaddrinfo(server_ip, server_port, &hints, &res) != 0){
-		cse4589_print_and_log("[LOGIN:ERROR]\n");
-		perror("Failed to create socket"); 
-	}
+    //setting up client socket
+    my_addrs.sin_family=AF_INET;
+    my_addrs.sin_addr.s_addr=INADDR_ANY;
+    my_addrs.sin_port=htons(5701);
+    int optval=1;
+    setsockopt(fdsocket, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+    if(bind(fdsocket, (struct  sockaddr*) &my_addrs, sizeof(struct sockaddr_in)) == 0)
+    {
+    	printf("\nclient binded to port correctly\n");
+    	return 1;
+    }
+    else
+    {
+    	printf("\nError in binding client port\n");
+    	return 0;
+    } 
+int len;
+    struct sockaddr_in remote_server_addr;
 
-  /* socket */ 
-	fdsocket = socket(res->ai_family, res->ai_socktype, res->ai_protocol); 
-	if(fdsocket < 0){
-		cse4589_print_and_log("[LOGIN:ERROR]\n");
-		perror("Failed to create socket!"); 
-	}
+    bzero(&remote_server_addr, sizeof(remote_server_addr));
+    remote_server_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "128.205.36.46", &remote_server_addr.sin_addr);//inet_pton - convert IPv4 and IPv6 addresses from text to binary form
+    remote_server_addr.sin_port = htons(4545);//function converts the unsigned short integer hostshort from host byte order to network byte order.
 
-  /* Connect */ 
-	if(connect(fdsocket, res->ai_addr, res-> ai_addrlen) < 0){
-		cse4589_print_and_log("[LOGIN:ERROR]\n");
-		perror("Connect Failed"); 
-	}
-
-	freeaddrinfo(res); 
-	return fdsocket; 
+    if(connect(fdsocket, (struct sockaddr*)&remote_server_addr, sizeof(remote_server_addr)) < 0)
+    {
+        perror("Connect failed");
+    }
+    else{
+    	printf("\nLogged in\n");
+    }
+    return fdsocket;
 }
 
 
 
-void client_start(char *host_ip){
+void client_start(char *port_listen){
 	int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
 	int fdsocket;
+
 	char *lst_appender = (char*) malloc(200*sizeof(char));
-  memset(lst_appender, '\0', 200);
-	//int server; 
-	//struct client_message  client_mess;
+	memset(lst_appender, '\0', 200);
+	
 
 	bool initial_login_state = TRUE;
 	login_initial_state(initial_login_state); 
@@ -775,13 +807,15 @@ void client_start(char *host_ip){
 					login_initial_state(FALSE);
 					//initial_login_state = FALSE;
 					fflush(stdout); 
-
+				
+				}else if(strcmp(msg,"IP") == 0){
+				  ip_address(); 
 				}else if (strcmp(msg,"LIST")==0) {
-					cse4589_print_and_log(lst_appender);
+				   cse4589_print_and_log(lst_appender);
 				}else if (strcmp(msg,"AUTHOR") == 0){
-          cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
-          cse4589_print_and_log(author); 
-          cse4589_print_and_log("[AUTHOR:END]\n");
+				  cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
+				  cse4589_print_and_log(author); 
+				  cse4589_print_and_log("[AUTHOR:END]\n");
         }
 				else if (strcmp(msg,"REFRESH") == 0){
           free(lst_appender);
