@@ -566,21 +566,32 @@ void login_initial_state(bool is_initial){
 		if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
 			exit(-1);
 		char arg[100][100];
-		int i=0, j = 0;
-    for (int a = 0; a <100; a++){
-      for(int b = 0; b < 100; b++){
-        arg[a][b] = '\0'; 
-      }
-    }
-		for (int n = 0; msg[n] != '\0'; n++){
-			if (msg[n] == ' ' || msg[n] == '\n' ){
+    	for (int a = 0; a <100; a++){
+			memset(arg[a],'\0',100);
+    	}
+
+		
+		int i=0, j = 0, n=0;
+		while (msg[n]==' ') {
+			n++;
+		}
+		while ( msg[n] != '\0'){
+			if (msg[n] == ' ') {
+				while (msg[n]==' ') {
+					n++;
+				}
 				i++;
 				j = 0;
+			}
+			else if ( msg[n] == '\n' ){
+				break;	
 			}else{
 				arg[i][j] = msg[n];
 				j++;
+				n++;
 			}
 		}
+
 		if (arg[0] == NULL) {
 			exit(-1);
 		}
@@ -741,14 +752,24 @@ void client_start(char *host_ip){
 					//}
 				}
 
-				int i=0, j = 0;
-				for (int n = 0; msg[n] != '\0'; n++){
-					if (msg[n] == ' ' || msg[n] == '\n' ){
+				int i=0, j = 0, n=0;
+				while (msg[n]==' ') {
+					n++;
+				}
+				while ( msg[n] != '\0'){
+					if (msg[n] == ' ') {
+						while (msg[n]==' ') {
+							n++;
+						}
 						i++;
 						j = 0;
-					}else if(msg[n] != '\n' && msg[n] != EOF){
+					}
+					else if ( msg[n] == '\n' ){
+						break;	
+					}else{
 						arg[i][j] = msg[n];
 						j++;
+						n++;
 					}
 				}
 				if (arg[0] == NULL) {
