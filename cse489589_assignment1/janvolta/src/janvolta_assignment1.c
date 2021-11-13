@@ -466,25 +466,55 @@ void server_start(int port){
 	    char host[40];
 		
 	    getnameinfo((struct sockaddr *)&client_addr, caddr_len,host, sizeof(host), 0,0,0);
-	
-	    struct ls_element *top = malloc(sizeof(struct ls_element));
-	    char status[ 10] = "logged-in\0";
-	    counter_clients ++; 
-	    int id = (server_ls != NULL)? server_ls->ls_id+1 : 1;
-	    ls_set_all(
-		       host	
-		       ,ntohs(client_addr.sin_port)
-		       ,id
-		       ,0
-		       ,fdaccept
-		       ,0
-		       ,status
-		       ,ip
-		       ,server_ls
-		       ,top	
-		       ); 
-	    server_ls = top;
-		
+	    if(server_ls == NULL){
+	      struct ls_element *top = malloc(sizeof(struct ls_element));
+	      char status[ 10] = "logged-in\0";
+	      counter_clients ++; 
+	      int id = (server_ls != NULL)? server_ls->ls_id+1 : 1;
+	      ls_set_all(
+			 host	
+			 ,ntohs(client_addr.sin_port)
+			 ,id
+			 ,0
+			 ,fdaccept
+			 ,0
+			 ,status
+			 ,ip
+			 ,server_ls
+			 ,top	
+			 ); 
+	      server_ls = top;
+	    }
+	    else{
+	      bool in_list = FALSE;
+	      for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
+		if(strcmp(cur->ip,ip) == 0){
+		  in_list = TRUE;
+		  strcpy(cur->status, "logged-in");
+		  break;
+		}
+	      }
+	      if(!in_list){
+		struct ls_element *top = malloc(sizeof(struct ls_element));
+		char status[ 10] = "logged-in\0";
+		counter_clients ++; 
+		int id = (server_ls != NULL)? server_ls->ls_id+1 : 1;
+		ls_set_all(
+			   host	
+			   ,ntohs(client_addr.sin_port)
+			   ,id
+			   ,0
+			   ,fdaccept
+			   ,0
+			   ,status
+			   ,ip
+			   ,server_ls
+			   ,top	
+			   ); 
+		server_ls = top;
+	      }
+
+	    }
 	    printf("PORT INITIATED %d\n", server_ls->ls_port);
             /* Add to watched socket list */
 	    FD_SET(fdaccept, &master_list);
@@ -549,6 +579,11 @@ void server_start(int port){
 		for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
 		  if(cur->fd_socket == sock_index){
 		    strcpy(cur->status, "logged-out");
+		    if(close(sock_index)<0){
+		      //failed
+		    }
+		    FD_CLR(sock_index, &master_list);
+		    // clears the bit for the file descriptor 
 		    break;
 		  }
 		} 
@@ -747,30 +782,25 @@ void login_initial_state(bool is_initial, int portnumber){
 	  valid_port = FALSE; 
 	}
       }
-      //hello
+      
       if(!ip_valid(login_ip) || !valid_port || strlen(arg[2]) == 0 ){
 	cse4589_print_and_log("[LOGIN:ERROR]\n");
 	cse4589_print_and_log("[LOGIN:END]");
 	continue;
       }
-      if(!is_initial){
-	strcpy(client_mess.command, "LOGIN"); 
-	if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
-	  cse4589_print_and_log("\n[LOGIN:SUCCESS]\n"); 
-	}
-	else{
-	  
-	  cse4589_print_and_log("\n[LOGIN:ERROR]\n");
-	  cse4589_print_and_log("[LOGIN:END]");
-	}
-	return;
-	// ----------------------------------------SEND LIST STUFF BECAUSE ITS REQUIRED 
+      choose_port(portnumber);
+      server = connect_to_host(login_ip, port_param);
+      strcpy(client_mess.command, "LOGIN"); 
+      if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
+	cse4589_print_and_log("\n[LOGIN:SUCCESS]\n"); 
       }
       else{
-
-	break; 
+	  
+	cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+	cse4589_print_and_log("[LOGIN:END]");
       }
-
+      return;
+      // ----------------------------------------SEND LIST STUFF BECAUSE ITS REQUIRED 
     }
 
     
@@ -853,26 +883,19 @@ void client_start(int port){
   int server_socket, head_socket, selret, sock_index, fdaccept=0, caddr_len; 
   char *lst_appender = (char*) malloc(500*sizeof(char));
   memset(lst_appender, '\0', 200);
-  choose_port(port); 
+  bool just_logged_in = TRUE; 
+   
   int counter_list = 0;
   bool initial_login_state = TRUE;
   login_initial_state(initial_login_state, port); 
  
-  server = connect_to_host(login_ip, port_param); 
+  
 
   fd_set master_list, watch_list; 
   FD_ZERO(&master_list);
   FD_ZERO(&watch_list);
   FD_SET(STDIN,&master_list);
   head_socket = 0 ; 
-  bool just_logged_in = TRUE; 
-  strcpy(client_mess.command, "LOGIN");
-  if(send(server,&client_mess,sizeof(client_mess),0)==sizeof(client_mess)){
-    cse4589_print_and_log("\n[LOGIN:SUCCESS]\n");
-  }
-  else{
-    cse4589_print_and_log("[LOGIN:ERROR]\n");
-  }
 
   while(TRUE){
 
@@ -956,6 +979,10 @@ void client_start(int port){
 	if (strcmp(msg,"LOGOUT") == 0){
 	  strcpy(client_mess.command, "LOGOUT"); 
 	  if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess) ){
+	    if(close(server)< 0){
+	      // it failed 
+	    }
+	  
 	    cse4589_print_and_log("\n[LOGOUT:SUCCESS]\n");
 	    cse4589_print_and_log("[LOGOUT:END]");
 	  }
