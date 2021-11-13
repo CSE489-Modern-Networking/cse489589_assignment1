@@ -174,9 +174,9 @@ void ip_address(){
   return; 
   
 }
-void print_statistics(struct ls_element ls){
+void print_statistics(struct ls_element ls, int i ){
   // these are place holders 
-  cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", ls.ls_id, ls.ls_hn, ls.snd_msg, ls.rcv_msg, ls.status);
+  cse4589_print_and_log("%-5d%-35s%-8d%-8d%-8s\n", i, ls.ls_hn, ls.snd_msg, ls.rcv_msg, ls.status);
 }
 
 struct ls_element *remove_id(struct ls_element *cur,int socket_id){
@@ -428,16 +428,16 @@ void server_start(int port){
             }
             else if(strcmp(cmd, "STATISTICS\n") == 0){
 	      int i = 0;
-
+	      printf("\n[STATISTICS:SUCCESS]\n");
 	      for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
 		if (i== 5) break;
 		i++;
-		print_statistics(*cur);
+		print_statistics(*cur, i);
             		
 
 	      }	
 
-	      printf("[STATISTICS:SUCCESS]\n"); 
+	      printf("[STATISTICS:END]\n"); 
 
 	      fflush(stdout);
             }
@@ -517,8 +517,9 @@ void server_start(int port){
 			        
 		for (struct ls_element *cur = server_ls ; cur != NULL; cur = cur->next){
 		  if (i== 5) break;
-		  i++;
+		
                   if(strcmp(cur->status,"logged-in") == 0){
+		     i++;
                     print_list(*cur, i);
                     copy(cur,&send_ls);		
                     strcpy(server_mes.command,"LIST");
