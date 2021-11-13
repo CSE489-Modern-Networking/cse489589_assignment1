@@ -68,13 +68,13 @@ bool ip_valid(char *ip);
  * @return 0 EXIT_SUCCESS
  */
 // set up blocked list pointer as NULL
-client_node *clientNdsLst = NULL;
-
 typedef struct nodeA{
 	char ip[32];
 	struct nodeB *blocked_clients;
 	struct nodeA *next;
 }client_node;
+client_node *clientNdsLst = NULL;
+
 
 typedef struct nodeB{
 	char ip[32];
