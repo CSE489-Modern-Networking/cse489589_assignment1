@@ -676,17 +676,16 @@ int server;
 /* CLIENT SIDE!! -------------------------------------------------------------------------------------------------------*/ 
 void login_initial_state(bool is_initial, int portnumber){
   while(TRUE){
-    char *msg = (char*) malloc(sizeof(char)*MSG_SIZE);
+    char *msg = (char*) malloc(sizeof(char)*1000);
+    memset(msg, '\0', 1000); 
     printf("\n[PA1-Client@CSE489/589]$ ");
     //Mind the newline character that will be written to msg
-    if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
+    if(fgets(msg, 1000, stdin) == NULL) //Mind the newline character that will be written to msg
       exit(-1);
-    char arg[100][100];
+    char arg[3][1000];
     int i=0, j = 0, n =0;
-    for (int a = 0; a <100; a++){
-      for(int b = 0; b < 100; b++){
-	arg[a][b] = '\0'; 
-      }
+    for(int a = 0; a < 3; a++){
+      memset(arg[a],'\0',1000);
     }
    
    
@@ -694,7 +693,7 @@ void login_initial_state(bool is_initial, int portnumber){
       n++;
     }
     while ( msg[n] != '\0'){
-      if (msg[n] == ' ') {
+      if (msg[n] == ' ' && i < 2) {
 	while (msg[n]==' ') {
 	  n++;
 	}
@@ -702,8 +701,9 @@ void login_initial_state(bool is_initial, int portnumber){
 	j = 0;
       }
       else if ( msg[n] == '\n' ){
-	break;	
-      }else{
+	break;
+      }
+      else{
 	arg[i][j] = msg[n];
 	j++;
 	n++;
@@ -716,19 +716,22 @@ void login_initial_state(bool is_initial, int portnumber){
     free(msg);
    
     msg = arg[0]; 
-   
+    printf("ARGSSTUFF\n");
+    printf(arg[2]);
    
   
     if(strcmp(msg,"LOGIN") == 0){
       login_ip = arg[1];
       port_param = arg[2];
       bool valid_port = TRUE; 
+      printf("%d length \n", strlen(port_param));
       for(int port_iter = 0; port_iter < strlen(port_param); port_iter++){
 	if(!isdigit(port_param[port_iter])){
 	  valid_port = FALSE; 
 	}
       }
-      if(!ip_valid(login_ip) || !valid_port || strlen(arg[2]) == 0){
+      //hello
+      if(!ip_valid(login_ip) || !valid_port || strlen(arg[2]) == 0 ){
 	cse4589_print_and_log("[LOGIN:ERROR]\n");
 	cse4589_print_and_log("[LOGIN:END]");
 	continue;
@@ -795,7 +798,8 @@ int connect_to_host(char *server_ip, char *server_port)
 
   if(connect(fdsocket, (struct sockaddr*)&server, sizeof(server)) < 0)
     {
-      perror("[LOGIN:ERROR]");
+      cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+      cse4589_print_and_log("[LOGIN:END]\n");
     }
     
   
@@ -821,7 +825,8 @@ int choose_port(int port){
   setsockopt(fdsocket, SOL_SOCKET, SO_REUSEPORT, &options, sizeof(options));
   if(bind(fdsocket, (struct  sockaddr*) &client, sizeof(struct sockaddr_in)) < 0)
     {
-      printf("\n[LOGIN:ERROR]\n");
+      cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+      cse4589_print_and_log("[LOGIN:END]\n");
       return 0;
     } 
   return 1;
@@ -875,28 +880,28 @@ void client_start(int port){
     selret = select(head_socket + 1, &watch_list, NULL, NULL, NULL);
     int ip_char_counter;	
     if(selret < 0)  {
-      printf("ERROR selret\n");
+      cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+      cse4589_print_and_log("[LOGIN:ERROR]\n");
       exit(-1);
     }
     for (sock_index=0; sock_index <= head_socket; sock_index++ ) {
       if(!FD_ISSET(sock_index,&watch_list)) continue;
       if (sock_index == STDIN) {
 			 
-	char *msg = (char *) malloc(sizeof(char)*MSG_SIZE); 
-	memset(msg, '\0', MSG_SIZE); 
+	char *msg = (char *) malloc(sizeof(char)*1000); 
+	memset(msg, '\0', 1000); 
 	//				printf("\n[PA1-Client@CSE489/589]$ "); 
 	fflush(stdout); 
 				
-	if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
+	if(fgets(msg, 1000, stdin) == NULL) //Mind the newline character that will be written to msg
 	  exit(-1);
 				
-	char arg[100][100];
+	char arg[3][500];
 	int i=0, j = 0;
-	for(int n =0; n < 100; n++){
-	  for(int j = 0; j < 100; j++){
-	    arg[n][j] = '\0';
-	  }
+	for(int a = 0; a < 100; a++){
+	  memset(arg[a],'\0',500);
 	}
+   
 
 	
 	i=0;
@@ -906,7 +911,7 @@ void client_start(int port){
 	  n++;
 	}
 	while ( msg[n] != '\0'){
-	  if (msg[n] == ' ') {
+	  if (msg[n] == ' ' && i < 2) {
 	    while (msg[n]==' ') {
 	      n++;
 	    }
@@ -985,6 +990,7 @@ void client_start(int port){
 	    strcpy(client_mess.command,"SEND");
 	    printf("size of client send: %d\n",sizeof(client_mess));
 	    if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)){
+	      printf("CLIENT SENT STUFF BELOW");
 	      printf("%s\n",client_mess.data);
 	    }		
 	  }
