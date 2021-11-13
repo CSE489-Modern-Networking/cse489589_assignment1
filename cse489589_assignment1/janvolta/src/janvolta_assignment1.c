@@ -387,33 +387,36 @@ void Block(char *ip, char *blockIp) {
     clientNdsLst -> next = holder;
   }
 }
-
 void Unblock(char *ip, char *blockIp) {
   if(clientNdsLst != NULL){
     client_node *client = findClientNds(ip);
     if (client != (struct nodeA*) NULL){
       if(findBlockedClientNds(client, blockIp)!= (struct nodeB*) NULL){
         blocked_client_node *blockedClient = client -> blocked_clients;
-        if(strcmp(blockedClient -> ip, blockIp)){
-          client -> blocked_clients = client -> blocked_clients-> next;
-          blocked_client_node *holder = client -> blocked_clients;
-          free(holder-> ip);
-          free(holder);
+        if(strcmp(blockedClient -> ip, blockIp)==0){
+          blocked_client_node *holder = client -> blocked_clients;            
+          printf("%s\n",blockedClient->next);         
+          client -> blocked_clients = blockedClient->next;
+          free(holder);   
         }
+        else{
         blockedClient = blockedClient -> next;
         blocked_client_node *cursor;
         blocked_client_node *previous;
+        printf("should come here\n");
         for(blocked_client_node *cursor =  blockedClient; (cursor != NULL); cursor = cursor -> next){
           if (strcmp(cursor->ip, blockIp)==0){
+            printf("%s\n", cursor-> ip);
             break;
           }
           else{
+            printf("%s", previous-> ip);
             previous = cursor;
           }
         }
         previous -> next = cursor->next;
-        free(cursor-> ip);
         free(cursor);
+        }
       }
     }
   }
