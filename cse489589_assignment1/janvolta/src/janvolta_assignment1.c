@@ -67,13 +67,25 @@ bool ip_valid(char *ip);
  * @param  argv The argut list
  * @return 0 EXIT_SUCCESS
  */
+// set up blocked list pointer as NULL
+client_node *clientNdsLst = NULL;
+
+typedef struct nodeA{
+	char ip[32];
+	struct nodeB *blocked_clients;
+	struct nodeA *next;
+}client_node;
+
+typedef struct nodeB{
+	char ip[32];
+	struct nodeB *next;
+}blocked_client_node;
 
 struct client_message {
   char ip[32];
   char command[20];
   char data[256];
 };
-
 
 struct ls_element {
   char ls_hn[40];
@@ -86,6 +98,7 @@ struct ls_element {
   char ip[32];
   struct ls_element *next;
 };
+
 struct message {
   char ip[32];
   char command[20];
@@ -309,9 +322,105 @@ void set_message(char *command,char *ip,char *msg,struct message *m){
   strcpy(m->command,command);
   strcpy(m->ip,ip);
   strcpy(m->data,msg);
-
 }
 
+struct nodeA* findClientNds(char *ip){
+  client_node *holder = NULL;
+  printf("%s\n", "in find");
+  printf("%s\n",ip);
+  for(client_node *cursor = clientNdsLst; (cursor != NULL); cursor = cursor -> next){
+    if (strcmp(cursor-> ip, ip)==0){
+      holder =  cursor;
+      printf("%s\n",holder->ip);
+    }
+  }
+  return holder;
+}
+
+struct nodeB* findBlockedClientNds(client_node *client, char* blockIp){
+  blocked_client_node *holder = NULL;
+  printf("%s\n", "in find blocked");
+  printf("%s\n",client -> ip);
+  for(blocked_client_node *cursor = client->blocked_clients; (cursor != NULL); cursor = cursor -> next){
+    if (strcmp(cursor->ip, blockIp)==0){
+      holder = cursor;
+      printf("%s\n",holder->ip);
+    }
+  }
+  return holder;
+}
+
+void Block(char *ip, char *blockIp) {
+  printf("%s\n", "test block got ip:");
+  printf("%s\n", ip);
+  client_node *holder = NULL;
+
+  if(clientNdsLst == NULL){
+    clientNdsLst = (client_node *)malloc(sizeof(client_node));
+    strcpy(clientNdsLst -> ip, ip);
+    clientNdsLst -> next = NULL;
+    blocked_client_node *blockedClient = (blocked_client_node *)malloc(sizeof(blocked_client_node));
+    strcpy(blockedClient -> ip, blockIp);
+    blockedClient -> next = NULL;
+    clientNdsLst -> blocked_clients = blockedClient;
+  }
+  else if (findClientNds(ip) != (struct nodeA*) NULL){
+    client_node *clients = findClientNds(ip);
+    blocked_client_node *blockedClient = findBlockedClientNds(clients, blockIp);
+    if (blockedClient == (struct nodeB*) NULL) {
+      printf("%s\n", "in else if");
+      blockedClient = clients -> blocked_clients;
+      blocked_client_node *newBlockedClient = (blocked_client_node *)malloc(sizeof(blocked_client_node));
+      strcpy(newBlockedClient -> ip, blockIp);
+      newBlockedClient -> next = blockedClient;
+      clients -> blocked_clients = newBlockedClient;
+    }
+  }
+  else{
+    holder = clientNdsLst;
+    clientNdsLst = (client_node *)malloc(sizeof(client_node));
+    strcpy(clientNdsLst -> ip, ip);
+    blocked_client_node *blockedClient = (blocked_client_node *)malloc(sizeof(blocked_client_node));
+    strcpy(blockedClient -> ip, blockIp);
+    blockedClient -> next = NULL;
+    clientNdsLst -> blocked_clients = blockedClient;
+    clientNdsLst -> next = holder;
+  }
+}
+void Unblock(char *ip, char *blockIp) {
+  if(clientNdsLst != NULL){
+    client_node *client = findClientNds(ip);
+    if (client != (struct nodeA*) NULL){
+      if(findBlockedClientNds(client, blockIp)!= (struct nodeB*) NULL){
+        blocked_client_node *blockedClient = client -> blocked_clients;
+        if(strcmp(blockedClient -> ip, blockIp)==0){
+          blocked_client_node *holder = client -> blocked_clients;            
+          printf("%s\n",blockedClient->next);         
+          client -> blocked_clients = blockedClient->next;
+          free(holder);   
+        }
+        else{
+        blockedClient = blockedClient -> next;
+        blocked_client_node *cursor;
+        blocked_client_node *previous;
+        printf("should come here\n");
+        for(blocked_client_node *cursor =  blockedClient; (cursor != NULL); cursor = cursor -> next){
+          if (strcmp(cursor->ip, blockIp)==0){
+            printf("%s\n", cursor-> ip);
+            break;
+          }
+          else{
+            printf("%s", previous-> ip);
+            previous = cursor;
+          }
+        }
+        previous -> next = cursor->next;
+        free(cursor);
+        }
+      }
+    }
+  }
+}
 /**********************************************************************************************************/
 
 // starting server function
@@ -634,6 +743,32 @@ void server_start(int port){
 	      
 		
 	      }
+	      else if (strcmp(recieve_mes.command,"BLOCK") == 0){
+		printf("ACCEPT\n"); 
+		char currentIp[32],blockIp[32];
+		int send_socket_id = 0;
+		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+		  if (cur->fd_socket == sock_index){
+		    strcpy(currentIp,cur->ip);
+		    strcpy(blockIp, recieve_mes.ip);
+		    break;
+		  }
+		}
+		Block(currentIp, blockIp);
+	      }
+	      else if (strcmp(recieve_mes.command,"UNBLOCK") == 0){
+		printf("ACCEPT\n"); 
+		char currentIp[32],blockIp[32];
+		int send_socket_id = 0;
+		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next){
+		  if (cur->fd_socket == sock_index){
+		    strcpy(currentIp,cur->ip);
+		    strcpy(blockIp, recieve_mes.ip);
+		    break;
+		  }
+		}
+		Unblock(currentIp, blockIp);
+	      } 
 	      
 	      else if (strcmp(recieve_mes.command,"SEND") == 0){
 		printf("ACCEPT\n"); 
@@ -689,10 +824,8 @@ void server_start(int port){
 		    break;
 		  }
 		}
-		
-		
 		strcpy(server_mes.data,recieve_mes.data);
-		for (struct ls_element *cur = server_ls; cur != NULL;  cur = cur->next  )	{
+		for (struct ls_element *cur = server_ls; cur != NULL;  cur = cur->next){
 		  if (cur->fd_socket == sock_index){
 		    continue;
 		  }
