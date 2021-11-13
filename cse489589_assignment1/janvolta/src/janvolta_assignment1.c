@@ -631,7 +631,8 @@ void server_start(int port){
 		  printf("what the client messaged: %s\n",recieve_mes.data);
 		  if (send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) {
 		    cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-		    cse4589_print_and_log("%s to %s of(%s)\n",send_ip,recv_ip,server_mes.data);
+		    cse4589_print_and_log("msg from:%s, to:%s\n[msg]:%s\n",send_ip,recv_ip,server_mes.data);
+		    cse4589_print_and_log("[RELAYED:END]\n");
 		    //	if(send(send_socket_id, &server_mes,sizeof(server_mes),0) ==  sizeof(server_mes)) 
 		    //{
 		    //	}
@@ -645,22 +646,40 @@ void server_start(int port){
 	      } 
 
 	      else if (strcmp(recieve_mes.command,"BROADCAST") == 0) {
+		char send_ip[32];
+		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+		  if (cur->fd_socket == sock_index){
+		    strcpy(send_ip,cur->ip);	
+		    cur->snd_msg++;
+		    break;
+		  }
+		}
+		
+		
+		strcpy(server_mes.data,recieve_mes.data);
 		for (struct ls_element *cur = server_ls; cur != NULL;  cur = cur->next  )	{
-		  set_message("MSG",cur->ip,recieve_mes.data,&server_mes);	
+		  if (cur->fd_socket == sock_index){
+		    continue;
+		  }
+		  set_message("MESSAGE",send_ip,recieve_mes.data,&server_mes);
+		  cur->rcv_msg++; 
+		 
 		  if (send(cur->fd_socket,&server_mes,sizeof(server_mes),0) == sizeof(server_mes)) {
-		    //	cse4589_print_and_log("%s to %s of(%s)\n",recieve_mes.ip,cur->ls_id,server_mes.data);
-
-		    cse4589_print_and_log("[BROADCAST:SUCCESS]\n");
-
+		  
+		    cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+		    cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n",send_ip,recieve_mes.data);
+		    cse4589_print_and_log("[RELAYED:END]\n");
+		                        		
 		  }else {
-		    cse4589_print_and_log("[BROADCAST:FAILED]\n");
+		    cse4589_print_and_log("[RELAYED:ERROR]\n");
+		    cse4589_print_and_log("[RELAYED:END]\n");
 		  }
 		  //	print_list(*cur);
 		}				
 
 	      }
 	    }
-	    //fflush(stdout);
+	    fflush(stdout);
           }
         }
       }
@@ -716,15 +735,13 @@ void login_initial_state(bool is_initial, int portnumber){
     free(msg);
    
     msg = arg[0]; 
-    printf("ARGSSTUFF\n");
-    printf(arg[2]);
    
   
     if(strcmp(msg,"LOGIN") == 0){
       login_ip = arg[1];
       port_param = arg[2];
       bool valid_port = TRUE; 
-      printf("%d length \n", strlen(port_param));
+      
       for(int port_iter = 0; port_iter < strlen(port_param); port_iter++){
 	if(!isdigit(port_param[port_iter])){
 	  valid_port = FALSE; 
@@ -898,7 +915,7 @@ void client_start(int port){
 				
 	char arg[3][500];
 	int i=0, j = 0;
-	for(int a = 0; a < 100; a++){
+	for(int a = 0; a < 3; a++){
 	  memset(arg[a],'\0',500);
 	}
    
@@ -935,8 +952,7 @@ void client_start(int port){
 	free(msg); 
 	msg = arg[0]; 
 			
-	printf(arg[2]);
-	printf("I got: %s(size:%d chars)\n", msg, strlen(msg));
+	
 	if (strcmp(msg,"LOGOUT") == 0){
 	  strcpy(client_mess.command, "LOGOUT"); 
 	  if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess) ){
@@ -980,32 +996,80 @@ void client_start(int port){
 	      cse4589_print_and_log("[REFRESH:ERROR]\n");
 	    }
 	  fflush(stdout);
-	}else if (strncmp(msg,"SEND", 4) == 0) {
+	}
+	else if (strcmp(msg,"BLOCK")==0) {
+	  strcpy(client_mess.command, "BLOCK");
+	  strcpy(client_mess.ip, arg[1]);
+	  if(ip_valid(arg[1])){
+	    cse4589_print_and_log("[BLOCK:ERROR]\n");
+	    cse4589_print_and_log("[BLOCK:END]\n");
+	    continue;
+	  }
+	  if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+	    cse4589_print_and_log("\n[BLOCK:SUCCESS]\n");
+	    cse4589_print_and_log("[BLOCK:END]\n");
+	  }
+	  else
+	    {
+	      cse4589_print_and_log("[BLOCK:ERROR]\n");
+	      cse4589_print_and_log("[BLOCK:END]\n");
+	    }
+	  fflush(stdout);
+	}
+	else if (strcmp(msg,"UNBLOCK")==0) {
+	  strcpy(client_mess.command, "UNBLOCK");
+	  strcpy(client_mess.ip, arg[1]);
+	  if(ip_valid(arg[1])){
+	    cse4589_print_and_log("[BLOCK:ERROR]\n");
+	    cse4589_print_and_log("[BLOCK:END]\n");
+	    continue;
+	  }
+	  if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+	    cse4589_print_and_log("\n[UNBLOCK:SUCCESS]\n");
+	    cse4589_print_and_log("[UNBLOCK:END]\n");
+	  }
+	  else
+	    {
+	      cse4589_print_and_log("[UNBLOCK:ERROR]\n");
+	      cse4589_print_and_log("[UNBLOCK:END]\n");
+	    }
+	}
+	else if (strncmp(msg,"SEND", 4) == 0) {
 	  char *ip = arg[1];
-	  printf("arg[2]%s\n",arg[2]);			
+	  if(!ip_valid(ip)){
+	    cse4589_print_and_log("\n[SEND:ERROR]\n");
+	    cse4589_print_and_log("[SEND:END]\n");
+	    continue; 
+	  }
+	  //printf("arg[2]%s\n",arg[2]);			
 	  if(TRUE){
-	    printf("WENT THRU SEND");
 	    strcpy(client_mess.data,arg[2]);
 	    strcpy(client_mess.ip,ip);
 	    strcpy(client_mess.command,"SEND");
-	    printf("size of client send: %d\n",sizeof(client_mess));
+	    //printf("size of client send: %d\n",sizeof(client_mess));
 	    if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)){
-	      printf("CLIENT SENT STUFF BELOW");
-	      printf("%s\n",client_mess.data);
-	    }		
+	      cse4589_print_and_log("\n[SEND:SUCCESS]\n"); 
+	      cse4589_print_and_log("[SEND:END]\n");
+	    }
+	    else{
+	      cse4589_print_and_log("\n[SEND:ERROR]\n");
+	      cse4589_print_and_log("[SEND:END]\n");
+	    }
+	   
 	  }
 	  else {
-	    cse4589_print_and_log("[SEND:ERROR]\n");
+	    cse4589_print_and_log("\n[SEND:ERROR]\n");
 	    cse4589_print_and_log("[SEND:END]\n");
 	  }
 
 	}else if (strcmp(msg,"BROADCAST")==0) {
-	  char *mes = arg[1];
+	  char *message_broadcast = arg[1];
 	  strcpy(client_mess.command,"BROADCAST");
-	  strcpy(client_mess.data,msg);
+	  strcpy(client_mess.data,message_broadcast);
 	  if (send(server,&client_mess,sizeof(client_mess),0) == sizeof(client_mess)) {
 
-	    cse4589_print_and_log("[BROADCAST:SUCCESS]");
+	    cse4589_print_and_log("\n[BROADCAST:SUCCESS]\n");
+	    cse4589_print_and_log("[BROADCAST:END]\n"); 
 	  }
 	  else {
 	    cse4589_print_and_log("[BROADCAST:FAILED]");
@@ -1056,7 +1120,9 @@ void client_start(int port){
 	  }
 	  
 	  else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
-	    cse4589_print_and_log("From(%s):%s\n",rec_server_mes.ip,rec_server_mes.data);
+	    cse4589_print_and_log("[RECEIVED:SUCCESS]\n");
+	    cse4589_print_and_log("msg from:%s\n[msg]:%s\n",rec_server_mes.ip,rec_server_mes.data);
+	    cse4589_print_and_log("[RECEIVED:END]\n");
 	  }
 	  else{ printf("Server responded: %s", rec_server_mes.data);
 	    //					      return; 
