@@ -555,14 +555,51 @@ void server_start(int port){
 		fflush(stdout); 
 	      }
 	      else if(strcmp(recieve_mes.command, "LOGIN") == 0){
+		int i = 0;
+		bool finished = TRUE;
+		cse4589_print_and_log("\n[LOGIN:SUCCESS]\n"); 
+		cse4589_print_and_log("[LOGIN:END]\n");
+			         
+		bubbleSort(&server_ls, counter_clients);
+		cse4589_print_and_log("\n[LIST:SUCCESS]\n");
 		for(struct ls_element *cur = server_ls; cur!= NULL; cur = cur->next){
+		   if (i== 5) break;
+		  i++;
 		  if(cur->fd_socket == sock_index){
 		    strcpy(cur->status, "logged-in");
-		    break;
 		  }
+                  if(strcmp(cur->status,"logged-in") == 0){
+                    print_list(*cur, i);
+                    copy(cur,&send_ls);		
+                    strcpy(server_mes.command,"LIST");
+                    server_mes.ls=	send_ls;
+                    if(send(sock_index,&server_mes,sizeof(server_mes),0) == sizeof(server_mes) ){
+		      //printf("list_sent\n");
+                    }
+                    else{
+		      finished = FALSE;
+		      cse4589_print_and_log("[LIST:ERROR]\n");
+		      break; 
+		    }
+                  }
+		 
 		} 
-		fflush(stdout); 
+		if(finished){
+		  strcpy(server_mes.command,"LISTEND_S");
+		}
+		else{
+		  strcpy(server_mes.command,"LISTEND_F");
+		}
+		if(send(sock_index, &server_mes, sizeof(server_mes), 0) == sizeof(server_mes)) {
+		  
+		}
+		fflush(stdout);
+	      
+		cse4589_print_and_log("[LIST:END]\n");
+	      
+		
 	      }
+	      
 	      else if (strcmp(recieve_mes.command,"SEND") == 0){
 		printf("ACCEPT\n"); 
 		char recv_ip[32],send_ip[32];
@@ -685,14 +722,26 @@ void login_initial_state(bool is_initial, int portnumber){
     if(strcmp(msg,"LOGIN") == 0){
       login_ip = arg[1];
       port_param = arg[2];
+      bool valid_port = TRUE; 
+      for(int port_iter = 0; port_iter < strlen(port_param); port_iter++){
+	if(!isdigit(port_param[port_iter])){
+	  valid_port = FALSE; 
+	}
+      }
+      if(!ip_valid(login_ip) || !valid_port || strlen(arg[2]) == 0){
+	cse4589_print_and_log("[LOGIN:ERROR]\n");
+	cse4589_print_and_log("[LOGIN:END]");
+	continue;
+      }
       if(!is_initial){
 	strcpy(client_mess.command, "LOGIN"); 
 	if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
-	  cse4589_print_and_log("\n[LOGIN:SUCESS]\n"); 
+	  cse4589_print_and_log("\n[LOGIN:SUCCESS]\n"); 
 	}
 	else{
 	  
 	  cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+	  cse4589_print_and_log("[LOGIN:END]");
 	}
 	return;
 	// ----------------------------------------SEND LIST STUFF BECAUSE ITS REQUIRED 
@@ -794,12 +843,13 @@ void client_start(int port){
   FD_ZERO(&watch_list);
   FD_SET(STDIN,&master_list);
   head_socket = 0 ; 
-  strcpy(client_mess.command, "LIST");
+  bool just_logged_in = TRUE; 
+  strcpy(client_mess.command, "LOGIN");
   if(send(server,&client_mess,sizeof(client_mess),0)==sizeof(client_mess)){
-    cse4589_print_and_log("\n[REFRESH:SUCCESS]\n");
+    cse4589_print_and_log("\n[LOGIN:SUCCESS]\n");
   }
   else{
-    cse4589_print_and_log("[REFRESH:ERROR]\n");
+    cse4589_print_and_log("[LOGIN:ERROR]\n");
   }
 
   while(TRUE){
@@ -886,6 +936,7 @@ void client_start(int port){
 	  strcpy(client_mess.command, "LOGOUT"); 
 	  if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess) ){
 	    cse4589_print_and_log("\n[LOGOUT:SUCCESS]\n");
+	    cse4589_print_and_log("[LOGOUT:END]");
 	  }
 	  else{
 	    cse4589_print_and_log("[LOGOUT:ERROR]\n"); 
@@ -968,24 +1019,36 @@ void client_start(int port){
 	 
 	  if (strcmp(rec_server_mes.command,"LIST") == 0 )	{
 	    counter_list++;
-	   
-	    print_list(rec_server_mes.ls, counter_list);
-            if(strlen(lst_appender) == 0){ // first initialization
-              sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", counter_list, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
-            }
-            else{
-              char temp[500];
+	    if(!just_logged_in){
+	      print_list(rec_server_mes.ls, counter_list);
+	    }
+	    if(strlen(lst_appender) == 0){ // first initialization
+	      sprintf(lst_appender, "%-5d%-35s%-20s%-8d\n\0", counter_list, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+	    }
+	    else{
+	      char temp[500];
 	      memset(&temp, '\0', 500);
-              sprintf(temp, "%-5d%-35s%-20s%-8d\n\0", counter_list, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
-              strcat(lst_appender, temp); 
-            } 					 
+	      sprintf(temp, "%-5d%-35s%-20s%-8d\n\0", counter_list, rec_server_mes.ls.ls_hn,rec_server_mes.ls.ip,rec_server_mes.ls.ls_port);
+	      strcat(lst_appender, temp); 
+	    } 	
+	    				 
 	  }else if(strcmp(rec_server_mes.command,"LISTEND_S") == 0)  {
-	    cse4589_print_and_log("[REFRESH:END]\n");
+	    if(just_logged_in){
+	      cse4589_print_and_log("[LOGIN:END]\n");
+	    }
+	    else{
+	      cse4589_print_and_log("[REFRESH:END]\n");
+	    }
+	    just_logged_in = FALSE; 
 	    counter_list = 0; 
 	  }else if(strcmp(rec_server_mes.command,"LISTEND_F")==0){
-	    cse4589_print_and_log("[REFRESH:ERROR]\n");
+	    if(just_logged_in){
+	      cse4589_print_and_log("[LOGIN:ERROR]\n");
+	    }
+	    else{cse4589_print_and_log("[REFRESH:ERROR]\n");}
+	    just_logged_in = FALSE; 
 	  }
-					
+	  
 	  else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
 	    cse4589_print_and_log("From(%s):%s\n",rec_server_mes.ip,rec_server_mes.data);
 	  }
