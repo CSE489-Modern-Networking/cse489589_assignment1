@@ -528,7 +528,7 @@ void server_start(int port){
                     }
                     else{
 		      finished = FALSE;
-		      cse4589_print_and_log("[LIST:ERROR]\n");
+		      cse4589_print_and_log("[REFRESH:ERROR]\n");
 		      break; 
 		    }
                   }
@@ -645,19 +645,31 @@ void login_initial_state(bool is_initial, int portnumber){
     if(fgets(msg, MSG_SIZE-1, stdin) == NULL) //Mind the newline character that will be written to msg
       exit(-1);
     char arg[100][100];
-    int i=0, j = 0;
+    int i=0, j = 0, n =0;
     for (int a = 0; a <100; a++){
       for(int b = 0; b < 100; b++){
 	arg[a][b] = '\0'; 
       }
     }
-    for (int n = 0; msg[n] != '\0'; n++){
-      if (msg[n] == ' ' || msg[n] == '\n' ){
+   
+   
+    while (msg[n]==' ') {
+      n++;
+    }
+    while ( msg[n] != '\0'){
+      if (msg[n] == ' ') {
+	while (msg[n]==' ') {
+	  n++;
+	}
 	i++;
 	j = 0;
+      }
+      else if ( msg[n] == '\n' ){
+	break;	
       }else{
 	arg[i][j] = msg[n];
 	j++;
+	n++;
       }
     }
     if (arg[0] == NULL) {
@@ -665,12 +677,14 @@ void login_initial_state(bool is_initial, int portnumber){
     }
 
     free(msg);
+   
     msg = arg[0]; 
+   
+   
+  
     if(strcmp(msg,"LOGIN") == 0){
       login_ip = arg[1];
       port_param = arg[2];
-      printf("%s\n", arg[1]);
-      printf(arg[2]);
       if(!is_initial){
 	strcpy(client_mess.command, "LOGIN"); 
 	if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
@@ -722,12 +736,13 @@ int connect_to_host(char *server_ip, char *server_port)
 {
  
   struct sockaddr_in server;
-  printf(server_port);
-  int port_server = server_port - '0';
+ 
+  int port_server = atoi(server_port);
   memset(&server, 0, sizeof(server)); 
+ 
   server.sin_family = AF_INET;
-  inet_pton(AF_INET, "128.205.36.46", &server.sin_addr);
-  server.sin_port = htons(4545);
+  inet_pton(AF_INET, server_ip, &server.sin_addr);
+  server.sin_port = htons(port_server);
 
   if(connect(fdsocket, (struct sockaddr*)&server, sizeof(server)) < 0)
     {
@@ -781,10 +796,10 @@ void client_start(int port){
   head_socket = 0 ; 
   strcpy(client_mess.command, "LIST");
   if(send(server,&client_mess,sizeof(client_mess),0)==sizeof(client_mess)){
-    cse4589_print_and_log("\n[LIST:SUCCESS]\n");
+    cse4589_print_and_log("\n[REFRESH:SUCCESS]\n");
   }
   else{
-    cse4589_print_and_log("[LIST:ERROR]\n");
+    cse4589_print_and_log("[REFRESH:ERROR]\n");
   }
 
   while(TRUE){
@@ -833,24 +848,39 @@ void client_start(int port){
 	  }
 	}
 
-	for (int n = 0; msg[n] != '\0'; n++){
-	  if (msg[n] == ' ' || msg[n] == '\n' ){
+	
+	i=0;
+	j = 0;
+	int n=0;
+	while (msg[n]==' ') {
+	  n++;
+	}
+	while ( msg[n] != '\0'){
+	  if (msg[n] == ' ') {
+	    while (msg[n]==' ') {
+	      n++;
+	    }
 	    i++;
 	    j = 0;
-	  }else if(msg[n] != '\n' && msg[n] != EOF){
+	  }
+	  else if ( msg[n] == '\n' ){
+	    break;	
+	  }else{
 	    arg[i][j] = msg[n];
 	    j++;
+	    n++;
 	  }
 	}
 	if (arg[0] == NULL) {
 	  exit(-1);
 	}
-	
+
 
 
 	free(msg); 
 	msg = arg[0]; 
 			
+	printf(arg[2]);
 	printf("I got: %s(size:%d chars)\n", msg, strlen(msg));
 	if (strcmp(msg,"LOGOUT") == 0){
 	  strcpy(client_mess.command, "LOGOUT"); 
@@ -887,11 +917,11 @@ void client_start(int port){
           memset(lst_appender, '\0', 500);
 	  strcpy(client_mess.command, "LIST");
 	  if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
-	    cse4589_print_and_log("\n[LIST:SUCCESS]\n");
+	    cse4589_print_and_log("\n[REFRESH:SUCCESS]\n");
 	  }
 	  else
 	    {
-	      cse4589_print_and_log("[LIST:ERROR]\n");
+	      cse4589_print_and_log("[REFRESH:ERROR]\n");
 	    }
 	  fflush(stdout);
 	}else if (strncmp(msg,"SEND", 4) == 0) {
@@ -950,10 +980,10 @@ void client_start(int port){
               strcat(lst_appender, temp); 
             } 					 
 	  }else if(strcmp(rec_server_mes.command,"LISTEND_S") == 0)  {
-	    cse4589_print_and_log("[LIST:END]\n");
+	    cse4589_print_and_log("[REFRESH:END]\n");
 	    counter_list = 0; 
 	  }else if(strcmp(rec_server_mes.command,"LISTEND_F")==0){
-	    cse4589_print_and_log("[LIST:ERROR]\n");
+	    cse4589_print_and_log("[REFRESH:ERROR]\n");
 	  }
 					
 	  else if(strcmp(rec_server_mes.command,"MESSAGE") == 0)  {
