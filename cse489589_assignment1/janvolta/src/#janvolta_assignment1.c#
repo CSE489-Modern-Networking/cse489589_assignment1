@@ -1125,11 +1125,7 @@ void client_start(int port){
 	  strcpy(client_mess.command, "LOGOUT");
 	  strcpy(client_mess.ip, ip_address(FALSE));
 	  if (send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess) ){
-	    if(close(server)< 0){
-	      // it failed 
-	    }
-	    
-	  
+    
 	    cse4589_print_and_log("\n[LOGOUT:SUCCESS]\n");
 	    cse4589_print_and_log("[LOGOUT:END]");
 	  }
