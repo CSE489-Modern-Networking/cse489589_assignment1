@@ -73,7 +73,19 @@ struct client_message {
   char command[20];
   char data[256];
 };
+struct message {
+  char ip[32];
+  char command[20];
+  char data[256];
+  struct ls_element ls;
+};
 
+struct  ls_element *ls_init(struct ls_element *next)	{
+  struct ls_element *ls= malloc(sizeof(struct ls_element));
+  ls->ls_id = 1;
+  ls->next = next;
+  return ls;
+}
 
 struct ls_element {
   char ls_hn[40];
@@ -312,6 +324,177 @@ void set_message(char *command,char *ip,char *msg,struct message *m){
 
 }
 
+struct nodeA* findClientNds(char *ip){
+  client_node *holder = NULL;
+  printf("%s\n", "in find");
+  printf("%s\n",ip);
+  for(client_node *cursor = clientNdsLst; (cursor != NULL); cursor = cursor -> next){
+    if (strcmp(cursor-> ip, ip)==0){
+      holder =  cursor;
+      printf("%s\n",holder->ip);
+      return holder;
+    }
+  }
+  return holder;
+}
+
+struct nodeB* findBlockedClientNds(client_node *client, char* blockIp){
+  blocked_client_node *holder = NULL;
+  printf("%s\n", "in find blocked");
+  printf("%s\n",client -> ip);
+  for(blocked_client_node *cursor = client->blocked_clients; (cursor != NULL); cursor = cursor -> next){
+    if (strcmp(cursor->ip, blockIp)==0){
+      holder = cursor;
+      printf("%s\n",holder->ip);
+    }
+  }
+  return holder;
+}
+
+void Block(char *hostName, int port, char *ip, char *blockIp) {
+  printf("%s\n", "test block got ip:");
+  printf("%s\n", ip);
+  client_node *holder = NULL;
+
+  if(clientNdsLst == NULL){
+    clientNdsLst = (client_node *)malloc(sizeof(client_node));
+    strcpy(clientNdsLst -> ip, ip);
+    clientNdsLst -> next = NULL;
+    blocked_client_node *blockedClient = (blocked_client_node *)malloc(sizeof(blocked_client_node));
+    strcpy(blockedClient -> ip, blockIp);
+    strcpy(blockedClient -> ls_hn, hostName);
+    blockedClient -> ls_port = port;
+    blockedClient -> next = NULL;
+    clientNdsLst -> blocked_clients = blockedClient;
+  }
+  else if (findClientNds(ip) != (struct nodeA*) NULL){
+    client_node *clients = findClientNds(ip);
+    blocked_client_node *blockedClient = findBlockedClientNds(clients, blockIp);
+    if (blockedClient == (struct nodeB*) NULL) {
+      printf("%s\n", "in else if");
+      blockedClient = clients -> blocked_clients;
+      blocked_client_node *newBlockedClient = (blocked_client_node *)malloc(sizeof(blocked_client_node));
+      strcpy(newBlockedClient -> ip, blockIp);
+      strcpy(newBlockedClient -> ls_hn, hostName);
+      newBlockedClient -> ls_port = port;
+      newBlockedClient -> next = blockedClient;
+      clients -> blocked_clients = newBlockedClient;
+    }
+  }
+  else{
+    holder = clientNdsLst;
+    clientNdsLst = (client_node *)malloc(sizeof(client_node));
+    strcpy(clientNdsLst -> ip, ip);
+    blocked_client_node *blockedClient = (blocked_client_node *)malloc(sizeof(blocked_client_node));
+    strcpy(blockedClient -> ip, blockIp);
+    strcpy(blockedClient -> ls_hn, hostName);
+    blockedClient -> ls_port = port;
+    blockedClient -> next = NULL;
+    clientNdsLst -> blocked_clients = blockedClient;
+    clientNdsLst -> next = holder;
+  }
+}
+
+void Unblock(char *ip, char *blockIp) {
+  if(clientNdsLst != NULL){
+    client_node *client = findClientNds(ip);
+    if (client != (struct nodeA*) NULL){
+      if(findBlockedClientNds(client, blockIp)!= (struct nodeB*) NULL){
+        blocked_client_node *blockedClient = client -> blocked_clients;
+	printf("%s\n11111111++++++++++++++++\n", blockedClient -> ip);
+        printf("%s\n1111111111+++++++++++++==========\n", blockIp);
+        if(strcmp(blockedClient -> ip, blockIp)==0){
+          blocked_client_node *holder = client -> blocked_clients;            
+          printf("%s\n",blockedClient->next);         
+          client -> blocked_clients = blockedClient->next;
+          free(holder);   
+        }
+        else{
+	  blockedClient = blockedClient -> next;
+	  blocked_client_node *cursor;
+	  blocked_client_node *previous;
+	  printf("should come here\n");
+	  for(blocked_client_node *cursor =  blockedClient; (cursor != NULL); cursor = cursor -> next){
+	    if (strcmp(cursor->ip, blockIp)==0){
+	      printf("%s\n", cursor-> ip);
+	      break;
+	    }
+	    else{
+	      printf("%s", previous-> ip);
+	      previous = cursor;
+	    }
+	  }
+	  previous -> next = cursor->next;
+	  free(cursor);
+        }
+      }
+    }
+  }
+}
+
+bool isBlocked(char *senderIp, char *receiver){
+  bool ret = false;
+  client_node *holder = findClientNds(receiver);
+  if (holder != (struct nodeA*) NULL) {
+    if (findBlockedClientNds(holder, senderIp) != (struct nodeB*) NULL){
+      ret = true;
+    }
+  }
+  return ret;
+}
+
+struct nodeB *swapBb(blocked_client_node* ptr1,blocked_client_node* ptr2){
+  blocked_client_node* tmp = ptr2->next;
+  ptr2->next = ptr1;
+  ptr1->next = tmp;
+  return ptr2;
+}
+
+void bubbleSortV(blocked_client_node** head, int count){
+  blocked_client_node** h;
+  int i, j, swapped;
+  for (i = 0; i <= count; i++) {
+    h = head;
+    swapped = 0;
+    for (j = 0; j < count - i - 1; j++) {
+      blocked_client_node* p1 =  *h;
+      blocked_client_node* p2 = p1->next;
+      if (p1->ls_port > p2->ls_port) {
+        *h = swapBb(p1, p2);
+        swapped = 1;
+      }
+      h = &(*h)->next;
+    }
+    if (swapped == 0)
+      break;
+  }
+}
+void Blocked(char *ip){
+  printf("%s-->IP",ip);
+  blocked_client_node * blockedListHead = findClientNds(ip) -> blocked_clients;
+  if(blockedListHead != (struct nodeB *)NULL){
+    blocked_client_node * cursor = blockedListHead;
+    printf("WENT THRU");
+    int counter =0;
+    while (cursor != NULL){
+      counter++;
+      cursor = cursor-> next;
+    }
+    bubbleSortV(&blockedListHead, counter);
+    cursor = blockedListHead;
+    cse4589_print_and_log("\n[BLOCKED:SUCCESS]\n");
+    while (cursor != NULL){
+      printf("%d", cursor -> ls_port);
+      printf(" %s", cursor -> ls_hn);
+      printf(" %s", cursor -> ip);
+      printf("\n");
+      cursor = cursor-> next;
+    }
+  }
+  cse4589_print_and_log("[BLOCKED:END]\n");
+}
+
+
 /**********************************************************************************************************/
 
 // starting server function
@@ -466,15 +649,14 @@ void server_start(int port){
 		if (i== 5) break;
 		i++;
 		print_statistics(*cur, i);
-            		
-
 	      }	
-
 	      printf("[STATISTICS:END]\n"); 
-
 	      fflush(stdout);
             }
-           
+	    else if(strcmp(arg[0], "BLOCKED") == 0){
+	      char *currentIP = arg[1];
+	      Blocked(currentIP);
+	    }
           }
           /* Check if new client is requesting connection */
           else if(sock_index == server_socket){
@@ -597,8 +779,54 @@ void server_start(int port){
 		} 
 		fflush(stdout); 
 	      }
+	      else if (strcmp(recieve_mes.command,"BLOCK") == 0){
+	       
+		char currentIp[32],blockIp[32],blockName[40];
+		int blockPort = 0;
+		int send_socket_id = 0;
+		strcpy(blockIp, recieve_mes.ip); // IP that were going to block
+		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+		  if (cur->fd_socket == sock_index){
+		    strcpy(currentIp,cur->ip);
+		    break;
+		  }
+		}
+		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
+		  if (strcmp(cur->ip, blockIp)==0){
+		    strcpy(blockName,cur->ls_hn);
+	  	    blockPort = cur->ls_port;
+		    break;
+		  }
+		}
+		Block(blockName, blockPort, currentIp, blockIp);
+	      }
+	      else if (strcmp(recieve_mes.command,"UNBLOCK") == 0){
+	       
+		char currentIp[32],blockedIp[32];
+		int send_socket_id = 0;
+		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next){
+		  if (cur->fd_socket == sock_index){
+		    strcpy(currentIp,cur->ip);
+		    strcpy(blockedIp, recieve_mes.ip);
+		    break;
+		  }
+		}
+		Unblock(currentIp, blockedIp);
+	      }      
+	      else if (strcmp(recieve_mes.command,"BLOCKED") == 0){
+		char currentIp[32], blockIp[32];
+		int send_socket_id = 0;
+		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next){
+		  if (cur->fd_socket == sock_index){
+		    strcpy(currentIp,cur->ip);
+		    strcpy(blockIp, recieve_mes.ip);
+		    break;
+		  }
+		}
+		Blocked(currentIp);
+	      }
+		    
 	      else if (strcmp(recieve_mes.command,"SEND") == 0){
-		 
 		char recv_ip[32],send_ip[32];
 		int send_socket_id = 0;
 		for (struct ls_element *cur = server_ls; cur != NULL ; cur = cur->next) {
@@ -639,7 +867,8 @@ void server_start(int port){
 		} 
 		fflush(stdout); 
 		//DO BLOCK_LIST
-	      } 
+	      }
+		 
 
 	      else if (strcmp(recieve_mes.command,"BROADCAST") == 0) {
 		char send_ip[32];
@@ -966,6 +1195,61 @@ void client_start(int port){
 	      cse4589_print_and_log("[REFRESH:ERROR]\n");
 	    }
 	  fflush(stdout);
+	}
+	else if (strcmp(msg,"BLOCK")==0) {
+	  strcpy(client_mess.command, "BLOCK");
+	  strcpy(client_mess.ip, arg[1]);
+	  if(!ip_valid(arg[1])){
+	    cse4589_print_and_log("[BLOCK:ERROR]\n");
+	    cse4589_print_and_log("[BLOCK:END]\n");
+	    continue;
+	  }
+	  if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+	    cse4589_print_and_log("\n[BLOCK:SUCCESS]\n");
+	    cse4589_print_and_log("[BLOCK:END]\n");
+	  }
+	  else
+	    {
+	      cse4589_print_and_log("[BLOCK:ERROR]\n");
+	      cse4589_print_and_log("[BLOCK:END]\n");
+	    }
+	  fflush(stdout);
+	}
+	else if (strcmp(msg,"UNBLOCK")==0) {
+	  strcpy(client_mess.command, "UNBLOCK");
+	  strcpy(client_mess.ip, arg[1]);
+	  if(!ip_valid(arg[1])){
+	    cse4589_print_and_log("[UNBLOCK:ERROR]\n");
+	    cse4589_print_and_log("[UNBLOCK:END]\n");
+	    continue;
+	  }
+	  if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+	    cse4589_print_and_log("\n[UNBLOCK:SUCCESS]\n");
+	    cse4589_print_and_log("[UNBLOCK:END]\n");
+	  }
+	  else
+	    {
+	      cse4589_print_and_log("[UNBLOCK:ERROR]\n");
+	      cse4589_print_and_log("[UNBLOCK:END]\n");
+	    }
+	}
+  	else if (strcmp(msg,"BLOCKED")==0) {
+	  strcpy(client_mess.command, "BLOCKED");
+	  strcpy(client_mess.ip, arg[1]);
+	  if(!ip_valid(arg[1])){
+	    cse4589_print_and_log("[BLOCKED:ERROR]\n");
+	    cse4589_print_and_log("[BLOCKED:END]\n");
+	    continue;
+	  }
+	  if (send(server, &client_mess, sizeof(client_mess),0) == sizeof(client_mess) ) {
+	    cse4589_print_and_log("\n[BLOCKED:SUCCESS]\n");
+	    cse4589_print_and_log("[BLOCKED:END]\n");
+	  }
+	  else
+	    {
+	      cse4589_print_and_log("[BLOCKED:ERROR]\n");
+	      cse4589_print_and_log("[BLOCKED:END]\n");
+	    }
 	}
 	else if (strncmp(msg,"SEND", 4) == 0) {
 	  char *ip = arg[1];
