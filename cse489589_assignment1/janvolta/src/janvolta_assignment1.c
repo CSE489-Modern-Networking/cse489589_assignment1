@@ -392,29 +392,62 @@ void server_start(int port){
 	  if (sock_index == STDIN){
 
 
-
-
-	    char *cmd = (char*) malloc(sizeof(char)*CMD_SIZE);
-
-            if(fgets(cmd, CMD_SIZE-1, stdin) == NULL) { //Mind the newline character that will be written to cmd
+	    char *msg = (char*) malloc(sizeof(char)*1000);
+	    memset(msg,'\0', 1000); 
+	    printf("\n[PA1-Client@CSE489/589]$ ");
+	    Mind the newline character that will be written to msg
+	    if(fgets(msg, 1000, stdin) == NULL) //Mind the newline character that will be written to msg
 	      exit(-1);
-            }
-          
+	    char arg[3][1000];
+	    int i=0, j = 0, n =0;
+	    for(int a = 0; a < 3; a++){
+	      memset(arg[a],'\0',1000);
+	    }
+   
+   
+	    while (msg[n]==' ') {
+	      n++;
+	    }
+	    while ( msg[n] != '\0'){
+	      if (msg[n] == ' ' && i < 2) {
+		while (msg[n]==' ') {
+		  n++;
+		}
+		i++;
+		j = 0;
+	      }
+	      else if ( msg[n] == '\n' ){
+		break;
+	      }
+	      else{
+		arg[i][j] = msg[n];
+		j++;
+		n++;
+	      }
+	    }
+	    if (arg[0] == NULL) {
+	      exit(-1);
+	    }
+
+	    free(msg);
+   
+	    msg = arg[0]; 
+
             //Process PA1 commands here ...
-            if(strcmp(cmd, "AUTHOR\n") == 0){
+            if(strcmp(msg, "AUTHOR") == 0){
               cse4589_print_and_log("[AUTHOR:SUCCESS]\n"); 
               cse4589_print_and_log(author); 
               cse4589_print_and_log("[AUTHOR:END]\n"); 
             }
-            else if(strcmp(cmd, "IP\n") == 0){
+            else if(strcmp(msg, "IP") == 0){
 	      ip_address();
             }	
-	    else if(strcmp(cmd, "PORT\n") == 0){
+	    else if(strcmp(msg, "PORT") == 0){
 	      cse4589_print_and_log("[PORT:SUCCESS]\n"); 
 	      cse4589_print_and_log("PORT:%s\n",port_char);
 	      cse4589_print_and_log("[PORT:END]\n"); 
 	    }
-            else if(strcmp(cmd,"LIST\n") == 0 ) {
+            else if(strcmp(msg,"LIST") == 0 ) {
 	      int i = 0;
 	      cse4589_print_and_log("[LIST:SUCCESS]\n");
 	      for (struct ls_element *cur = server_ls ; cur != NULL; cur = cur->next){
@@ -426,7 +459,7 @@ void server_start(int port){
 		}
 	      cse4589_print_and_log("[LIST:END]\n");
             }
-            else if(strcmp(cmd, "STATISTICS\n") == 0){
+            else if(strcmp(msg, "STATISTICS") == 0){
 	      int i = 0;
 	      printf("\n[STATISTICS:SUCCESS]\n");
 	      for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
@@ -441,7 +474,7 @@ void server_start(int port){
 
 	      fflush(stdout);
             }
-            free(cmd);
+           
           }
           /* Check if new client is requesting connection */
           else if(sock_index == server_socket){
