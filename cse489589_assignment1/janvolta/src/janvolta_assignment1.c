@@ -68,17 +68,7 @@ bool ip_valid(char *ip);
  * @return 0 EXIT_SUCCESS
  */
 
-struct client_message {
-  char ip[32];
-  char command[20];
-  char data[256];
-};
-struct message {
-  char ip[32];
-  char command[20];
-  char data[256];
-  struct ls_element ls;
-};
+
 
 typedef struct nodeA{
 	char ip[32];
@@ -95,12 +85,7 @@ typedef struct nodeB{
 
 client_node *clientNdsLst = NULL;
 
-struct  ls_element *ls_init(struct ls_element *next)	{
-  struct ls_element *ls= malloc(sizeof(struct ls_element));
-  ls->ls_id = 1;
-  ls->next = next;
-  return ls;
-}
+
 
 struct ls_element {
   char ls_hn[40];
@@ -113,12 +98,7 @@ struct ls_element {
   char ip[32];
   struct ls_element *next;
 };
-struct message {
-  char ip[32];
-  char command[20];
-  char data[256];
-  struct ls_element ls;
-}; 
+
 
 struct  ls_element *ls_init(struct ls_element *next)	{
   struct ls_element *ls= malloc(sizeof(struct ls_element));
@@ -149,6 +129,17 @@ void ls_set_all(
   temp-> next  = next;
   strcpy(temp->ip,ip);
 }
+struct client_message {
+  char ip[32];
+  char command[20];
+  char data[256];
+};
+struct message {
+  char ip[32];
+  char command[20];
+  char data[256];
+  struct ls_element ls;
+};
 
 void copy(struct ls_element *first, struct ls_element *second){
   ls_set_all(	
@@ -341,12 +332,11 @@ void set_message(char *command,char *ip,char *msg,struct message *m){
 
 struct nodeA* findClientNds(char *ip){
   client_node *holder = NULL;
-  printf("%s\n", "in find");
-  printf("%s\n",ip);
+
   for(client_node *cursor = clientNdsLst; (cursor != NULL); cursor = cursor -> next){
     if (strcmp(cursor-> ip, ip)==0){
       holder =  cursor;
-      printf("%s\n",holder->ip);
+
       return holder;
     }
   }
@@ -355,20 +345,18 @@ struct nodeA* findClientNds(char *ip){
 
 struct nodeB* findBlockedClientNds(client_node *client, char* blockIp){
   blocked_client_node *holder = NULL;
-  printf("%s\n", "in find blocked");
-  printf("%s\n",client -> ip);
+
   for(blocked_client_node *cursor = client->blocked_clients; (cursor != NULL); cursor = cursor -> next){
     if (strcmp(cursor->ip, blockIp)==0){
       holder = cursor;
-      printf("%s\n",holder->ip);
+    
     }
   }
   return holder;
 }
 
 void Block(char *hostName, int port, char *ip, char *blockIp) {
-  printf("%s\n", "test block got ip:");
-  printf("%s\n", ip);
+
   client_node *holder = NULL;
 
   if(clientNdsLst == NULL){
@@ -386,7 +374,7 @@ void Block(char *hostName, int port, char *ip, char *blockIp) {
     client_node *clients = findClientNds(ip);
     blocked_client_node *blockedClient = findBlockedClientNds(clients, blockIp);
     if (blockedClient == (struct nodeB*) NULL) {
-      printf("%s\n", "in else if");
+    
       blockedClient = clients -> blocked_clients;
       blocked_client_node *newBlockedClient = (blocked_client_node *)malloc(sizeof(blocked_client_node));
       strcpy(newBlockedClient -> ip, blockIp);
@@ -416,26 +404,26 @@ void Unblock(char *ip, char *blockIp) {
     if (client != (struct nodeA*) NULL){
       if(findBlockedClientNds(client, blockIp)!= (struct nodeB*) NULL){
         blocked_client_node *blockedClient = client -> blocked_clients;
-	printf("%s\n11111111++++++++++++++++\n", blockedClient -> ip);
-        printf("%s\n1111111111+++++++++++++==========\n", blockIp);
+
         if(strcmp(blockedClient -> ip, blockIp)==0){
           blocked_client_node *holder = client -> blocked_clients;            
-          printf("%s\n",blockedClient->next);         
+              
           client -> blocked_clients = blockedClient->next;
+
           free(holder);   
         }
         else{
 	  blockedClient = blockedClient -> next;
 	  blocked_client_node *cursor;
 	  blocked_client_node *previous;
-	  printf("should come here\n");
+	 
 	  for(blocked_client_node *cursor =  blockedClient; (cursor != NULL); cursor = cursor -> next){
 	    if (strcmp(cursor->ip, blockIp)==0){
-	      printf("%s\n", cursor-> ip);
+	     
 	      break;
 	    }
 	    else{
-	      printf("%s", previous-> ip);
+	  
 	      previous = cursor;
 	    }
 	  }
@@ -450,8 +438,9 @@ void Unblock(char *ip, char *blockIp) {
 bool isBlocked(char *senderIp, char *receiver){
   bool ret = false;
   client_node *holder = findClientNds(receiver);
-  if (holder != (struct nodeA*) NULL) {
-    if (findBlockedClientNds(holder, senderIp) != (struct nodeB*) NULL){
+  if(holder !=  NULL) {
+    blocked_client_node *blockedClient = findBlockedClientNds(holder, senderIp);
+    if (blockedClient != NULL){
       ret = true;
     }
   }
@@ -485,11 +474,11 @@ void bubbleSortV(blocked_client_node** head, int count){
   }
 }
 void Blocked(char *ip){
-  printf("%s-->IP",ip);
+  
   blocked_client_node * blockedListHead = findClientNds(ip) -> blocked_clients;
   if(blockedListHead != (struct nodeB *)NULL){
     blocked_client_node * cursor = blockedListHead;
-    printf("WENT THRU");
+   
     int counter =0;
     while (cursor != NULL){
       counter++;
@@ -498,11 +487,10 @@ void Blocked(char *ip){
     bubbleSortV(&blockedListHead, counter);
     cursor = blockedListHead;
     cse4589_print_and_log("\n[BLOCKED:SUCCESS]\n");
+    int i = 0; 
     while (cursor != NULL){
-      printf("%d", cursor -> ls_port);
-      printf(" %s", cursor -> ls_hn);
-      printf(" %s", cursor -> ip);
-      printf("\n");
+      i++;
+      cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", i,cursor->ls_hn, cursor->ip, cursor->ls_port);
       cursor = cursor-> next;
     }
   }
@@ -593,7 +581,7 @@ void server_start(int port){
 	    char *msg = (char*) malloc(sizeof(char)*1000);
 	    memset(msg,'\0', 1000); 
 	    printf("\n[PA1-Client@CSE489/589]$ ");
-	    Mind the newline character that will be written to msg
+
 	    if(fgets(msg, 1000, stdin) == NULL) //Mind the newline character that will be written to msg
 	      exit(-1);
 	    char arg[3][1000];
@@ -659,18 +647,20 @@ void server_start(int port){
             }
             else if(strcmp(msg, "STATISTICS") == 0){
 	      int i = 0;
-	      printf("\n[STATISTICS:SUCCESS]\n");
+	      cse4589_print_and_log("\n[STATISTICS:SUCCESS]\n");
 	      for (struct ls_element *cur =server_ls ; cur != NULL; cur = cur->next){
 		if (i== 5) break;
 		i++;
 		print_statistics(*cur, i);
 	      }	
-	      printf("[STATISTICS:END]\n"); 
+	      cse4589_print_and_log("[STATISTICS:END]\n"); 
 	      fflush(stdout);
             }
 	    else if(strcmp(arg[0], "BLOCKED") == 0){
 	      char *currentIP = arg[1];
+	      //cse4589_print_and_log("\n[BLOCKED:SUCCESS]\n");
 	      Blocked(currentIP);
+	      //cse4589_print_and_log("[BLOCKED:END]\n"); 
 	    }
           }
           /* Check if new client is requesting connection */
@@ -814,6 +804,8 @@ void server_start(int port){
 		  }
 		}
 		Block(blockName, blockPort, currentIp, blockIp);
+		cse4589_print_and_log("\n[BLOCK:SUCCESS]\n");
+		cse4589_print_and_log("[BLOCK:END]\n");
 	      }
 	      else if (strcmp(recieve_mes.command,"UNBLOCK") == 0){
 	       
@@ -860,8 +852,9 @@ void server_start(int port){
 		    break;
 		  }
 		}
-		bool blocked = true;
-		if (!blocked) {
+		
+		bool blocked = isBlocked(send_ip, recv_ip);
+		if (blocked) {
 		  continue;	
 		} else {
 		  strcpy(server_mes.command,"MESSAGE");
@@ -881,7 +874,7 @@ void server_start(int port){
 		  }
 		} 
 		fflush(stdout); 
-		//DO BLOCK_LIST
+		
 	      }
 		 
 
@@ -899,18 +892,20 @@ void server_start(int port){
 		  if (cur->fd_socket == sock_index){
 		    continue;
 		  }
-		  set_message("MESSAGE",send_ip,recieve_mes.data,&server_mes);
-		  cur->rcv_msg++; 
+		  if(TRUE){ // not blocked
+		    set_message("MESSAGE",send_ip,recieve_mes.data,&server_mes);
+		    cur->rcv_msg++; 
 		 
-		  if (send(cur->fd_socket,&server_mes,sizeof(server_mes),0) == sizeof(server_mes)) {
+		    if (send(cur->fd_socket,&server_mes,sizeof(server_mes),0) == sizeof(server_mes)) {
 		  
-		    cse4589_print_and_log("[RELAYED:SUCCESS]\n");
-		    cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n",send_ip,recieve_mes.data);
-		    cse4589_print_and_log("[RELAYED:END]\n");
+		      cse4589_print_and_log("[RELAYED:SUCCESS]\n");
+		      cse4589_print_and_log("msg from:%s, to:255.255.255.255\n[msg]:%s\n",send_ip,recieve_mes.data);
+		      cse4589_print_and_log("[RELAYED:END]\n");
 		                        		
-		  }else {
-		    cse4589_print_and_log("[RELAYED:ERROR]\n");
-		    cse4589_print_and_log("[RELAYED:END]\n");
+		    }else {
+		      cse4589_print_and_log("[RELAYED:ERROR]\n");
+		      cse4589_print_and_log("[RELAYED:END]\n");
+		    }
 		  }
         
 		  //	print_list(*cur);
@@ -979,6 +974,19 @@ void login_initial_state(bool is_initial, int portnumber){
     if(strcmp(msg,"LOGIN") == 0){
       login_ip = arg[1];
       port_param = arg[2];
+      if(!ip_valid(arg[1])){
+	cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+	cse4589_print_and_log("[LOGIN:END]\n");
+	continue; 
+      }
+      for(int i = 0; i < strlen(port_param); i++){
+	if(!isdigit(port_param[i])){
+	  cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+	  cse4589_print_and_log("[LOGIN:END]\n");
+	  continue; 
+	}
+      } 
+      
       if(!is_initial){
 	strcpy(client_mess.command, "LOGIN"); 
 	if(send(server, &client_mess, sizeof(client_mess), 0) == sizeof(client_mess)){
@@ -1033,7 +1041,11 @@ int connect_to_host(char *server_ip, char *server_port)
  
   int port_server = atoi(server_port);
   memset(&server, 0, sizeof(server)); 
- 
+  if(port_server < 1 || port_server > 65535){
+    cse4589_print_and_log("\n[LOGIN:ERROR]\n");
+    cse4589_print_and_log("[LOGIN:END]\n");
+
+  }
   server.sin_family = AF_INET;
   inet_pton(AF_INET, server_ip, &server.sin_addr);
   server.sin_port = htons(port_server);
@@ -1067,6 +1079,7 @@ int choose_port(int port){
   if(bind(fdsocket, (struct  sockaddr*) &client, sizeof(struct sockaddr_in)) < 0)
     {
       printf("\n[LOGIN:ERROR]\n");
+      printf("[LOGIN:END]\n");
       return 0;
     } 
   return 1;
