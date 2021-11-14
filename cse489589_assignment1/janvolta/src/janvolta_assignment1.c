@@ -80,6 +80,21 @@ struct message {
   struct ls_element ls;
 };
 
+typedef struct nodeA{
+	char ip[32];
+	struct nodeB *blocked_clients;
+	struct nodeA *next;
+}client_node;
+
+typedef struct nodeB{
+	char ip[32];
+  char ls_hn[40];
+	int ls_port;
+	struct nodeB *next;
+}blocked_client_node;
+
+client_node *clientNdsLst = NULL;
+
 struct  ls_element *ls_init(struct ls_element *next)	{
   struct ls_element *ls= malloc(sizeof(struct ls_element));
   ls->ls_id = 1;
